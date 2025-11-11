@@ -1776,6 +1776,13 @@ const streamTransaction = streamParser.createTransaction({
         }
       };
     }
+  },
+  descriptor: {
+    attributes: [
+      {
+        type: "identifier"
+      }
+    ]
   }
 });
 ```
