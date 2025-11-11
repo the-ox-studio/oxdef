@@ -1,5 +1,6 @@
 import { PreprocessError } from "../errors/errors.js";
 import { ExpressionEvaluator } from "./expressions.js";
+import { BlockRegistryBuilder, ReferenceResolver } from "./references.js";
 
 /**
  * TemplateExpander - expands template blocks using transaction data
@@ -14,6 +15,10 @@ export class TemplateExpander {
   /**
    * Expand all templates in the document
    * This processes <on-data>, <on-error>, and other template blocks
+   *
+   * Two-Pass Resolution:
+   * Pass 1: Expand templates and build block registry (evaluates non-$ expressions)
+   * Pass 2: Resolve $parent, $this, and $BlockId references
    */
   expandTemplates(document) {
     const expandedBlocks = [];
@@ -36,6 +41,16 @@ export class TemplateExpander {
     if (document.blocks && document.blocks.length > 0) {
       expandedBlocks.push(...document.blocks);
     }
+
+    // Two-Pass Resolution System
+    // Pass 1: Build block registry (already done during expansion)
+    const builder = new BlockRegistryBuilder();
+    const registry = builder.build(expandedBlocks);
+    builder.finalize();
+
+    // Pass 2: Resolve references ($parent, $this, $BlockId)
+    const resolver = new ReferenceResolver(registry, this.expressionEvaluator);
+    resolver.resolve(expandedBlocks);
 
     return expandedBlocks;
   }
@@ -368,6 +383,17 @@ export class TemplateExpander {
 
     for (const [key, valueNode] of Object.entries(block.properties)) {
       if (valueNode && valueNode.type === "Expression") {
+        // Check if expression contains $ references
+        // If so, skip it - it will be resolved in Pass 2
+        const hasDollarReference = valueNode.tokens.some(
+          (token) => token.type === "DOLLAR",
+        );
+
+        if (hasDollarReference) {
+          // Skip - will be resolved in Pass 2 by ReferenceResolver
+          continue;
+        }
+
         // Evaluate the expression and replace with a literal
         const evaluatedValue = this.expressionEvaluator.evaluate(valueNode);
 

@@ -288,6 +288,11 @@ export class ExpressionEvaluator {
       return this.parseReference(tokens, index);
     }
 
+    // Special reference ($ prefix)
+    if (token.type === TokenType.DOLLAR) {
+      return this.parseDollarReference(tokens, index);
+    }
+
     // Parenthesized expression
     if (token.type === TokenType.LPAREN) {
       index++; // consume (
@@ -302,6 +307,32 @@ export class ExpressionEvaluator {
     throw new PreprocessError(
       `Unexpected token in expression: ${token.type}`,
       "UnexpectedToken",
+      null,
+    );
+  }
+
+  /**
+   * Parse $-prefixed references ($parent, $this, $BlockId)
+   * This is a placeholder that will be overridden by ReferenceResolver in Pass 2
+   */
+  parseDollarReference(tokens, index) {
+    index++; // consume $
+
+    if (index >= tokens.length || tokens[index].type !== TokenType.IDENTIFIER) {
+      throw new PreprocessError(
+        "Expected identifier after $",
+        "ExpectedIdentifier",
+        null,
+      );
+    }
+
+    const refName = tokens[index].value;
+
+    // For now, throw an error indicating references need two-pass resolution
+    throw new PreprocessError(
+      `Reference $${refName} requires two-pass resolution. ` +
+        `This should be resolved in Pass 2.`,
+      "UnresolvedReference",
       null,
     );
   }

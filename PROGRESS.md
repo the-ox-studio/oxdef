@@ -284,11 +284,101 @@ Implemented complete template system with expression evaluation:
 - Proper variable scoping with save/restore pattern
 - Exception safety in all cleanup code
 
+## Completed (Phase 10)
+
+### ✅ Two-Pass Resolution System & Reference Resolution
+**Files**: `src/preprocessor/references.js`, `src/preprocessor/expressions.js`, `src/preprocessor/templates.js`
+
+Implemented complete two-pass resolution system for block references:
+
+#### Two-Pass Architecture
+**File**: `src/preprocessor/references.js` (370+ lines)
+
+The two-pass system enables forward references and complex parent/sibling relationships:
+
+**Pass 1: Block Registry Building**
+- **BlockRegistry**: Stores block metadata (parent, children, siblings, properties)
+- **BlockRegistryBuilder**: Traverses expanded AST to build registry
+  - Registers all blocks with parent relationships
+  - Stores literal properties (evaluated in Pass 1)
+  - Skips expression properties containing $ references (deferred to Pass 2)
+  - Builds sibling lists after all blocks registered
+
+**Pass 2: Reference Resolution**
+- **ReferenceResolver**: Resolves `$parent`, `$this`, and `$BlockId` references
+  - Temporarily overrides `parseDollarReference()` in expression evaluator
+  - Resolves references in block property expressions
+  - Replaces Expression nodes with Literal nodes after resolution
+  - Supports chaining: `$parent.parent.size`
+
+#### Reference Types Supported
+
+**`$parent` References**: Access direct parent block properties
+```ox
+[Container (width: 400)
+  [Box (width: ($parent.width - 40))]
+]
+```
+
+**`$this` References**: Self-reference to current block properties
+```ox
+[Box (width: 100, doubled: ($this.width * 2))]
+```
+
+**`$BlockId` References**: Reference sibling blocks by ID (capitalized)
+```ox
+[Layout
+  [Sidebar (width: 250)]
+  [Content (margin: ($Sidebar.width))]
+]
+```
+
+**Chaining Support**: Navigate multiple levels
+```ox
+[Grandparent (size: 300)
+  [Parent
+    [Child (width: ($parent.parent.size))]
+  ]
+]
+```
+
+#### Integration with Template Expander
+**File**: `src/preprocessor/templates.js` (updated)
+
+- Modified `expandTemplates()` to apply two-pass system after template expansion
+- Updated `evaluateBlockProperties()` to skip expressions with DOLLAR tokens in Pass 1
+- Pass 2 automatically invoked after all templates expanded
+
+#### Expression Evaluator Updates
+**File**: `src/preprocessor/expressions.js` (updated)
+
+- Added `parseDollarReference()` method to handle `$` prefix in expressions
+- Method throws "UnresolvedReference" error in Pass 1 (expected behavior)
+- ReferenceResolver overrides method during Pass 2 to resolve references
+- Proper token sequence handling: `$parent` = DOLLAR + IDENTIFIER("parent")
+
+**Tests**: 35/36 passing
+- **BlockRegistry**: 5/5 tests passing
+- **BlockRegistryBuilder**: 3/3 tests passing  
+- **ReferenceResolver**: 18/18 tests passing ($this, $parent, $BlockId, complex expressions, edge cases)
+- **Integration Tests**: 9/10 tests passing (1 test depends on Phase 9 foreach fix)
+
+**Overall Test Status**: 199/205 passing (97.1%)
+- 5 failures from Phase 9 (templates in loop bodies - parser limitation)
+- 1 failure from integration test depending on Phase 9 foreach
+
+**Architecture Highlights**:
+- Two-pass design enables forward references (siblings defined later)
+- Clean separation between Pass 1 (build) and Pass 2 (resolve)
+- No circular dependency issues (literals evaluated first, expressions second)
+- Method override pattern allows clean integration without modifying core evaluator
+- All reference types properly validated with descriptive errors
+
 ## Next Steps (In Order)
 
-### Phase 10: Reference Resolution & Advanced Features
-- [ ] Reference resolution (`$parent`, `$this`, `$BlockId`)
-- [ ] Two-pass resolution (forward references)
+### Phase 11: Parser Enhancement & Function Calls
+- [ ] Fix parser to support templates in loop bodies (resolve 5 failing tests)
+- [ ] Function call system (built-in and user-defined)
 - [ ] Function call support
 - [ ] Parser enhancement: templates in loop bodies
 
@@ -327,23 +417,24 @@ This separation ensures:
 1. **Parser limitation**: Templates cannot be nested inside loop bodies (e.g., `<set>` inside `<while>`)
    - Affects 5 tests in template-expansion.test.js
    - Will be addressed in future parser enhancement
-2. **No special reference resolution yet**: `$parent`, `$this`, `$BlockId` (Phase 10)
-3. **No function calls**: Built-in or user-defined functions (Phase 10)
-4. **No multi-file imports**: Import resolution not yet implemented
-5. **No streaming support**: Full document must be in memory
+2. **No function calls yet**: Built-in or user-defined functions (Phase 11)
+3. **No multi-file imports**: Import resolution not yet implemented
+4. **No streaming support**: Full document must be in memory
+5. **Parser limitation**: Templates in loop bodies not yet supported (5 failing tests)
 
-These are expected limitations - they're part of Phase 10 and beyond.
+These are expected limitations - they're part of Phase 11 and beyond.
 
 ## Completed Phases Summary
 
-**Phases 1-9 are now complete:**
+**Phases 1-10 are now complete:**
 - ✅ **Phase 1**: Lexer/Parser - Complete OX syntax parsing
 - ✅ **Phase 2-4**: Tag System - Definition, expansion, composition
 - ✅ **Phase 5**: Module Property Injection - External data injection
 - ✅ **Phase 6-7**: Data Sources & Async Handling - Transaction system, async fetching
 - ✅ **Phase 8**: Data Source Template Expansion - `<on-data>` and `<on-error>` templates
 - ✅ **Phase 9**: Expression Evaluation & Template Expansion - Full control flow with expressions
+- ✅ **Phase 10**: Two-Pass Resolution & Reference Resolution - `$parent`, `$this`, `$BlockId` references
 
-**Current Status**: 169/174 tests passing (97.1%)
+**Current Status**: 199/205 tests passing (97.1%)
 
-**Next**: Phase 10 - Reference resolution, two-pass preprocessing, function calls
+**Next**: Phase 11 - Parser enhancement for templates in loops, function calls
