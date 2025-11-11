@@ -1,4 +1,5 @@
 import { PreprocessError } from "../errors/errors.js";
+import { ExpressionEvaluator } from "./expressions.js";
 
 /**
  * TemplateExpander - expands template blocks using transaction data
@@ -7,6 +8,7 @@ export class TemplateExpander {
   constructor(transaction, dataSourceProcessor) {
     this.transaction = transaction;
     this.dataSourceProcessor = dataSourceProcessor;
+    this.expressionEvaluator = new ExpressionEvaluator(transaction);
   }
 
   /**
@@ -148,39 +150,250 @@ export class TemplateExpander {
 
   /**
    * Expand <set> template (variable declaration)
+   * Sets a variable in the transaction and produces no blocks
    */
   expandSet(setNode) {
-    // Set templates don't produce blocks, they just set variables
-    // This will be handled in Phase 9 when we implement full template expansion
-    // For now, just return null (no blocks produced)
+    const name = setNode.name;
+    const value = this.expressionEvaluator.evaluate(setNode.value);
+
+    this.transaction.setVariable(name, value);
+
+    // Set templates don't produce blocks
     return null;
   }
 
   /**
    * Expand <if> template
+   * Evaluates conditions and expands the matching branch
    */
   expandIf(ifNode) {
-    // If templates will be fully implemented in Phase 9
-    // For now, just expand all branches (no condition evaluation yet)
-    return null;
+    // Evaluate the main condition
+    const condition = this.expressionEvaluator.evaluate(ifNode.condition);
+
+    if (this.expressionEvaluator.toBoolean(condition)) {
+      // Condition is true, expand the then blocks
+      return this.expandNodes(ifNode.thenBlocks);
+    }
+
+    // Check elseif branches
+    if (ifNode.elseIfBranches && ifNode.elseIfBranches.length > 0) {
+      for (const branch of ifNode.elseIfBranches) {
+        const elseifCondition = this.expressionEvaluator.evaluate(
+          branch.condition,
+        );
+        if (this.expressionEvaluator.toBoolean(elseifCondition)) {
+          return this.expandNodes(branch.blocks);
+        }
+      }
+    }
+
+    // All conditions false, expand else blocks if present
+    if (ifNode.elseBlocks && ifNode.elseBlocks.length > 0) {
+      return this.expandNodes(ifNode.elseBlocks);
+    }
+
+    // No matching branch, return empty array
+    return [];
   }
 
   /**
    * Expand <foreach> template
+   * Iterates over a collection and expands blocks for each item
    */
   expandForeach(foreachNode) {
-    // Foreach templates will be fully implemented in Phase 9
-    // For now, just return null
-    return null;
+    const itemName = foreachNode.itemVar;
+    const indexName = foreachNode.indexVar; // optional (null if not specified)
+
+    // Collection is a variable name (string), look it up
+    const collection = this.transaction.getVariable(foreachNode.collection);
+
+    if (collection === undefined) {
+      throw new PreprocessError(
+        `Undefined variable: ${foreachNode.collection}`,
+        "UndefinedVariable",
+        foreachNode.location,
+      );
+    }
+
+    // Collection must be iterable (array)
+    if (!Array.isArray(collection)) {
+      throw new PreprocessError(
+        `Foreach collection must be an array, got ${typeof collection}`,
+        "InvalidForeachCollection",
+        foreachNode.location,
+      );
+    }
+
+    const expandedBlocks = [];
+
+    // Save previous values of item and index variables
+    const previousItem = this.transaction.getVariable(itemName);
+    const previousIndex = indexName
+      ? this.transaction.getVariable(indexName)
+      : undefined;
+
+    try {
+      // Iterate over collection
+      for (let i = 0; i < collection.length; i++) {
+        // Set loop variables
+        this.transaction.setVariable(itemName, collection[i]);
+        if (indexName) {
+          this.transaction.setVariable(indexName, i);
+        }
+
+        // Clone the body nodes for this iteration to avoid shared state
+        const clonedBody = this.cloneNodes(foreachNode.body);
+
+        // Expand blocks with current item in scope
+        const iterationBlocks = this.expandNodes(clonedBody);
+        expandedBlocks.push(...iterationBlocks);
+      }
+
+      // Restore previous values
+      if (previousItem !== undefined) {
+        this.transaction.setVariable(itemName, previousItem);
+      } else {
+        this.transaction.deleteVariable(itemName);
+      }
+
+      if (indexName) {
+        if (previousIndex !== undefined) {
+          this.transaction.setVariable(indexName, previousIndex);
+        } else {
+          this.transaction.deleteVariable(indexName);
+        }
+      }
+
+      return expandedBlocks;
+    } catch (error) {
+      // Restore on error too
+      if (previousItem !== undefined) {
+        this.transaction.setVariable(itemName, previousItem);
+      } else {
+        this.transaction.deleteVariable(itemName);
+      }
+
+      if (indexName) {
+        if (previousIndex !== undefined) {
+          this.transaction.setVariable(indexName, previousIndex);
+        } else {
+          this.transaction.deleteVariable(indexName);
+        }
+      }
+
+      throw error;
+    }
   }
 
   /**
    * Expand <while> template
+   * Repeatedly expands blocks while condition is true
    */
   expandWhile(whileNode) {
-    // While templates will be fully implemented in Phase 9
-    // For now, just return null
-    return null;
+    const expandedBlocks = [];
+    const maxIterations = 10000; // Prevent infinite loops
+    let iterations = 0;
+
+    while (true) {
+      // Check iteration limit
+      if (iterations >= maxIterations) {
+        throw new PreprocessError(
+          `While loop exceeded maximum iterations (${maxIterations})`,
+          "MaxIterationsExceeded",
+          whileNode.location,
+        );
+      }
+
+      // Evaluate condition
+      const condition = this.expressionEvaluator.evaluate(whileNode.condition);
+
+      if (!this.expressionEvaluator.toBoolean(condition)) {
+        break; // Condition false, exit loop
+      }
+
+      // Clone the body nodes for this iteration to avoid shared state
+      const clonedBody = this.cloneNodes(whileNode.body);
+
+      // Expand blocks with condition true
+      const iterationBlocks = this.expandNodes(clonedBody);
+      expandedBlocks.push(...iterationBlocks);
+
+      iterations++;
+    }
+
+    return expandedBlocks;
+  }
+
+  /**
+   * Clone an array of nodes (deep copy)
+   */
+  cloneNodes(nodes) {
+    return nodes.map((node) => this.cloneNode(node));
+  }
+
+  /**
+   * Deep clone a single node
+   */
+  cloneNode(node) {
+    if (!node || typeof node !== "object") {
+      return node;
+    }
+
+    if (Array.isArray(node)) {
+      return node.map((item) => this.cloneNode(item));
+    }
+
+    const cloned = { ...node };
+
+    // Deep clone nested objects and arrays
+    for (const key in cloned) {
+      if (cloned.hasOwnProperty(key)) {
+        if (typeof cloned[key] === "object" && cloned[key] !== null) {
+          cloned[key] = this.cloneNode(cloned[key]);
+        }
+      }
+    }
+
+    return cloned;
+  }
+
+  /**
+   * Evaluate property expressions in a block
+   * Converts Expression nodes to Literal nodes with evaluated values
+   */
+  evaluateBlockProperties(block) {
+    if (!block.properties) {
+      return;
+    }
+
+    for (const [key, valueNode] of Object.entries(block.properties)) {
+      if (valueNode && valueNode.type === "Expression") {
+        // Evaluate the expression and replace with a literal
+        const evaluatedValue = this.expressionEvaluator.evaluate(valueNode);
+
+        // Determine the type of the evaluated value
+        let valueType;
+        if (typeof evaluatedValue === "number") {
+          valueType = "number";
+        } else if (typeof evaluatedValue === "string") {
+          valueType = "string";
+        } else if (typeof evaluatedValue === "boolean") {
+          valueType = "boolean";
+        } else if (evaluatedValue === null) {
+          valueType = "null";
+        } else {
+          valueType = "object";
+        }
+
+        // Replace with a literal node
+        block.properties[key] = {
+          type: "Literal",
+          valueType: valueType,
+          value: evaluatedValue,
+          location: valueNode.location,
+        };
+      }
+    }
   }
 
   /**
@@ -200,6 +413,9 @@ export class TemplateExpander {
           }
         }
       } else if (node.type === "Block") {
+        // Evaluate property expressions
+        this.evaluateBlockProperties(node);
+
         // Recursively expand children
         if (node.children && node.children.length > 0) {
           node.children = this.expandNodes(node.children);
