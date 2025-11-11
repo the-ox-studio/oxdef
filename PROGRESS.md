@@ -37,7 +37,7 @@ Implemented recursive descent parser supporting:
 #### Templates
 - **Variable declaration**: `<set name = value>`
 - **Conditionals**: `<if (condition)>...<elseif>...<else>...</if>` (supports nested templates)
-- **Loops**: 
+- **Loops**:
   - `<foreach (item in collection)>...</foreach>`
   - `<foreach (item, index in collection)>...</foreach>`
   - `<while (condition)>...</while>`
@@ -188,24 +188,24 @@ Implemented complete data source system:
 
 ## Next Steps (In Order)
 
-### Phase 8: Template Expansion
+### Phase 8: Data Sources & AST
 - [ ] Data source detection in AST
 - [ ] Async execution framework
 - [ ] Error handling for data sources
 
-### Phase 8: Template Expansion
+### Phase 9: Template Expansion
 - [ ] Variable scope management
 - [ ] Conditional evaluation (`<if>`, `<elseif>`, `<else>`)
 - [ ] Loop expansion (`<foreach>`, `<while>`)
 - [ ] Template block integration
 
-### Phase 9: Expression System
+### Phase 10: Expression System
 - [ ] Expression parser (arithmetic, logical, comparison)
 - [ ] Reference resolution (`$parent`, `$this`, `$BlockId`)
 - [ ] Two-pass resolution (forward references)
 - [ ] Function call support
 
-### Phase 10: Output
+### Phase 11: Output
 - [ ] Tree walker API
 - [ ] Serialization/deserialization
 - [ ] Pure data output
