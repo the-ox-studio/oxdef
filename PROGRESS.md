@@ -85,9 +85,12 @@ Created working examples:
 ✔ Tag Registry (5 tests)
 ✔ Tag Processor (11 tests)
 ✔ Tag Expansion (5 tests)
-✔ Module Property Injection (8 tests)
+✔ Module Property Injection (10 tests)
+✔ Critical Fixes (5 tests)
+✔ Transaction (23 tests)
+✔ DataSourceProcessor (12 tests)
 ───────────────────────
-✔ Total: 72/72 passing
+✔ Total: 102/102 passing
 ```
 
 ## What's Working
@@ -97,10 +100,12 @@ Created working examples:
 3. **Tag support** - Both `@tag` (definition) and `#tag` (instance) parse correctly
 4. **Tag expansion** - Pattern matching, composition, and instance expansion fully functional
 5. **Module property injection** - External data injection with conflict validation
-6. **Template syntax** - All template types (`<set>`, `<if>`, `<foreach>`, etc.) work
-7. **Error reporting** - Parse errors include file location and context
-8. **Comments** - Line and block comments are properly skipped
-9. **Expression capture** - Expressions stored as token sequences for later evaluation
+6. **Data sources** - Async data fetching with timeout, caching, and error handling
+7. **Transaction system** - Variable, function, and data source management
+8. **Template syntax** - All template types (`<set>`, `<if>`, `<foreach>`, etc.) work
+9. **Error reporting** - Parse errors include file location and context
+10. **Comments** - Line and block comments are properly skipped
+11. **Expression capture** - Expressions stored as token sequences for later evaluation
 
 ## Completed (Phase 2)
 
@@ -156,9 +161,34 @@ Implemented module property injection system:
 
 **Tests**: 8/8 passing (Module Property Injection)
 
+## Completed (Phase 6-7)
+
+### ✅ Data Sources & Async Handling
+**Files**: `src/transaction/transaction.js`, `src/preprocessor/datasources.js`
+
+Implemented complete data source system:
+- **Transaction Class**: Manages variables, functions, and data sources
+  - Async data source execution with timeout handling
+  - Result and error caching for performance
+  - Support for both direct functions and wrappers with transaction access
+  - Parallel fetching with `fetchDataSources()`
+  - Transaction cloning for independent copies
+- **DataSourceProcessor**: Detects and executes data sources in AST
+  - Recursive detection of `<on-data>` blocks in templates
+  - Dependency graph building for nested sources
+  - Execution planning (parallel vs sequential)
+  - Proper error handling and caching
+- **Execution Strategies**:
+  - Parallel execution for top-level sources
+  - Sequential execution for nested sources
+  - Timeout handling with structured errors
+  - Mixed success/failure scenarios
+
+**Tests**: 35/35 passing (Transaction: 23, DataSourceProcessor: 12)
+
 ## Next Steps (In Order)
 
-### Phase 6-7: Data Sources
+### Phase 8: Template Expansion
 - [ ] Data source detection in AST
 - [ ] Async execution framework
 - [ ] Error handling for data sources
@@ -203,13 +233,14 @@ This separation ensures:
 
 1. Expressions are not yet evaluated (stored as token sequences)
 2. Templates are not yet expanded (stored in AST)
-3. Data sources are parsed but not executed
-4. No multi-file resolution yet
-5. No streaming support yet
+3. No multi-file resolution yet
+4. No streaming support yet
 
 These are all expected - they're part of the preprocessing phases that come next.
 
-**Note**: Tag system (Phases 2-5) is now complete, including:
-- Tag definitions and instances
-- Tag composition and expansion
-- Module property injection with conflict validation
+**Note**: Phases 1-7 are now complete:
+- ✅ Lexer/Parser (Phase 1)
+- ✅ Tag System (Phases 2-4)
+- ✅ Module Property Injection (Phase 5)
+- ✅ Data Sources & Async Handling (Phases 6-7)
+- ✅ Critical fixes applied (memory safety, circular detection, module context)
