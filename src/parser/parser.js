@@ -1,0 +1,723 @@
+import { tokenize, TokenType } from "../lexer/tokenizer.js";
+import { ParseError, createLocation } from "../errors/errors.js";
+import {
+  createDocument,
+  createBlock,
+  createTag,
+  createProperty,
+  createLiteral,
+  createArray,
+  createExpression,
+  createSet,
+  createIf,
+  createForeach,
+  createWhile,
+  createOnData,
+  createImport,
+} from "./ast.js";
+
+/**
+ * Recursive descent parser for OX language
+ */
+export class Parser {
+  constructor(tokens, filename = "<input>") {
+    this.tokens = tokens;
+    this.filename = filename;
+    this.pos = 0;
+  }
+
+  /**
+   * Get current token
+   */
+  current() {
+    return this.tokens[this.pos];
+  }
+
+  /**
+   * Peek ahead n tokens
+   */
+  peek(n = 1) {
+    return this.tokens[this.pos + n];
+  }
+
+  /**
+   * Check if at end
+   */
+  isAtEnd() {
+    return this.current().type === TokenType.EOF;
+  }
+
+  /**
+   * Advance to next token
+   */
+  advance() {
+    if (!this.isAtEnd()) {
+      this.pos++;
+    }
+    return this.tokens[this.pos - 1];
+  }
+
+  /**
+   * Check if current token matches type
+   */
+  check(type) {
+    if (this.isAtEnd()) return false;
+    return this.current().type === type;
+  }
+
+  /**
+   * Match and consume token if type matches
+   */
+  match(...types) {
+    for (const type of types) {
+      if (this.check(type)) {
+        return this.advance();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Expect token of specific type or throw error
+   */
+  expect(type, message) {
+    if (this.check(type)) {
+      return this.advance();
+    }
+    this.error(message || `Expected ${type} but got ${this.current().type}`);
+  }
+
+  /**
+   * Create error at current position
+   */
+  error(message) {
+    const token = this.current();
+    const location = createLocation(this.filename, token.line, token.column);
+    throw new ParseError(message, location);
+  }
+
+  /**
+   * Get location from token
+   */
+  getLocation(token) {
+    return createLocation(this.filename, token.line, token.column);
+  }
+
+  /**
+   * Parse entire document
+   */
+  parse() {
+    const doc = createDocument();
+
+    while (!this.isAtEnd()) {
+      // Check for templates, tags, or blocks
+      if (this.check(TokenType.LT)) {
+        const template = this.parseTemplate();
+        if (template.type === "Import") {
+          doc.imports.push(template);
+        } else {
+          doc.templates.push(template);
+        }
+      } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+        // Tags followed by block
+        doc.blocks.push(this.parseBlock());
+      } else if (this.check(TokenType.LBRACKET)) {
+        doc.blocks.push(this.parseBlock());
+      } else {
+        this.error(`Unexpected token ${this.current().type}`);
+      }
+    }
+
+    return doc;
+  }
+
+  /**
+   * Parse a block: [Identifier (properties) children...]
+   * Or with tags: @tag [Identifier...] or #tag [Identifier...]
+   */
+  parseBlock() {
+    // Parse tags (@ or #) that come before the block
+    const tags = [];
+    while (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+      tags.push(this.parseTag());
+    }
+
+    const startToken = this.expect(TokenType.LBRACKET);
+    const location = this.getLocation(startToken);
+
+    // Parse identifier
+    const idToken = this.expect(
+      TokenType.IDENTIFIER,
+      "Expected block identifier",
+    );
+    const id = idToken.value;
+
+    // Parse properties (optional)
+    let properties = {};
+    if (this.check(TokenType.LPAREN)) {
+      properties = this.parseProperties();
+    }
+
+    // Parse children (until ])
+    const children = [];
+    while (!this.check(TokenType.RBRACKET) && !this.isAtEnd()) {
+      if (this.check(TokenType.LBRACKET)) {
+        children.push(this.parseBlock());
+      } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+        // Tags inside block (followed by another block)
+        children.push(this.parseBlock());
+      } else if (this.check(TokenType.LT)) {
+        // Template inside block
+        children.push(this.parseTemplate());
+      } else {
+        this.error(`Unexpected token ${this.current().type} in block body`);
+      }
+    }
+
+    this.expect(TokenType.RBRACKET, "Expected ] to close block");
+
+    return createBlock(id, properties, children, tags, location);
+  }
+
+  /**
+   * Parse a tag: @identifier or @identifier(arg) or #identifier or #identifier(arg)
+   */
+  parseTag() {
+    const tagTypeToken = this.match(TokenType.AT, TokenType.HASH);
+    const tagType =
+      tagTypeToken.type === TokenType.AT ? "definition" : "instance";
+    const location = this.getLocation(tagTypeToken);
+
+    const nameToken = this.expect(TokenType.IDENTIFIER, "Expected tag name");
+    const name = nameToken.value;
+
+    let argument = null;
+    if (this.check(TokenType.LPAREN)) {
+      this.advance(); // (
+      const argToken = this.expect(
+        TokenType.IDENTIFIER,
+        "Expected tag argument",
+      );
+      argument = argToken.value;
+      this.expect(TokenType.RPAREN, "Expected ) after tag argument");
+    }
+
+    return createTag(tagType, name, argument, location);
+  }
+
+  /**
+   * Parse properties: (key1: value1, key2: value2, ...)
+   */
+  parseProperties() {
+    this.expect(TokenType.LPAREN);
+    const properties = {};
+
+    while (!this.check(TokenType.RPAREN) && !this.isAtEnd()) {
+      const keyToken = this.expect(
+        TokenType.IDENTIFIER,
+        "Expected property key",
+      );
+      const key = keyToken.value;
+
+      this.expect(TokenType.COLON, "Expected : after property key");
+
+      const value = this.parseValue();
+      properties[key] = value;
+
+      // Optional comma
+      if (!this.check(TokenType.RPAREN)) {
+        this.expect(TokenType.COMMA, "Expected , between properties");
+      }
+    }
+
+    this.expect(TokenType.RPAREN);
+    return properties;
+  }
+
+  /**
+   * Parse a value (literal, array, or expression)
+   */
+  parseValue() {
+    const token = this.current();
+    const location = this.getLocation(token);
+
+    // Expression: (...)
+    if (this.check(TokenType.LPAREN)) {
+      return this.parseExpression();
+    }
+
+    // Array: {...}
+    if (this.check(TokenType.LBRACE)) {
+      return this.parseArray();
+    }
+
+    // Literals
+    if (this.check(TokenType.STRING)) {
+      const t = this.advance();
+      return createLiteral("string", t.value, location);
+    }
+
+    if (this.check(TokenType.NUMBER)) {
+      const t = this.advance();
+      return createLiteral("number", t.value, location);
+    }
+
+    if (this.check(TokenType.BOOLEAN)) {
+      const t = this.advance();
+      return createLiteral("boolean", t.value, location);
+    }
+
+    if (this.check(TokenType.NULL)) {
+      this.advance();
+      return createLiteral("null", null, location);
+    }
+
+    // Unquoted identifier as string
+    if (this.check(TokenType.IDENTIFIER)) {
+      const t = this.advance();
+      return createLiteral("string", t.value, location);
+    }
+
+    this.error(`Unexpected value token: ${token.type}`);
+  }
+
+  /**
+   * Parse expression: (tokens...)
+   */
+  parseExpression() {
+    const startToken = this.expect(TokenType.LPAREN);
+    const location = this.getLocation(startToken);
+    const tokens = [];
+
+    let depth = 1;
+    while (depth > 0 && !this.isAtEnd()) {
+      const token = this.current();
+
+      if (token.type === TokenType.LPAREN) {
+        depth++;
+      } else if (token.type === TokenType.RPAREN) {
+        depth--;
+        if (depth === 0) break;
+      }
+
+      tokens.push(token);
+      this.advance();
+    }
+
+    this.expect(TokenType.RPAREN, "Expected ) to close expression");
+
+    return createExpression(tokens, location);
+  }
+
+  /**
+   * Parse array: {item1, item2, ...}
+   */
+  parseArray() {
+    const startToken = this.expect(TokenType.LBRACE);
+    const location = this.getLocation(startToken);
+    const elements = [];
+
+    while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
+      elements.push(this.parseValue());
+
+      if (!this.check(TokenType.RBRACE)) {
+        this.expect(TokenType.COMMA, "Expected , between array elements");
+      }
+    }
+
+    this.expect(TokenType.RBRACE, "Expected } to close array");
+
+    return createArray(elements, location);
+  }
+
+  /**
+   * Parse template: <keyword ...>
+   */
+  parseTemplate() {
+    this.expect(TokenType.LT);
+
+    const keywordToken = this.expect(
+      TokenType.IDENTIFIER,
+      "Expected template keyword",
+    );
+    const keyword = keywordToken.value;
+    const location = this.getLocation(keywordToken);
+
+    switch (keyword) {
+      case "set":
+        return this.parseSet(location);
+      case "if":
+        return this.parseIf(location);
+      case "foreach":
+        return this.parseForeach(location);
+      case "while":
+        return this.parseWhile(location);
+      case "on-data":
+        return this.parseOnData(location);
+      case "import":
+        return this.parseImport(location);
+      default:
+        this.error(`Unknown template keyword: ${keyword}`);
+    }
+  }
+
+  /**
+   * Parse <set name = value>
+   */
+  parseSet(location) {
+    const nameToken = this.expect(
+      TokenType.IDENTIFIER,
+      "Expected variable name",
+    );
+    const name = nameToken.value;
+
+    this.expect(TokenType.EQUALS, "Expected = in set statement");
+
+    const value = this.parseValue();
+
+    this.expect(TokenType.GT, "Expected > to close set statement");
+
+    return createSet(name, value, location);
+  }
+
+  /**
+   * Parse <if (condition)>...<elseif>...<else>...</if>
+   */
+  parseIf(location) {
+    const condition = this.parseExpression();
+    this.expect(TokenType.GT, "Expected > after if condition");
+
+    // Parse then blocks
+    const thenBlocks = [];
+    while (!this.isAtEnd()) {
+      if (this.check(TokenType.LT)) {
+        // Check if it's a closing tag or else/elseif
+        const peekKeyword = this.peek(1);
+        if (peekKeyword && peekKeyword.type === TokenType.IDENTIFIER) {
+          if (
+            peekKeyword.value === "else" ||
+            peekKeyword.value === "elseif" ||
+            (peekKeyword.value === "if" &&
+              this.peek(0).type === TokenType.SLASH)
+          ) {
+            break;
+          }
+        }
+        if (this.peek(1) && this.peek(1).type === TokenType.SLASH) {
+          break;
+        }
+        // It's a nested template
+        thenBlocks.push(this.parseTemplate());
+      } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+        thenBlocks.push(this.parseBlock());
+      } else if (this.check(TokenType.LBRACKET)) {
+        thenBlocks.push(this.parseBlock());
+      } else {
+        break;
+      }
+    }
+
+    // Parse elseif/else branches
+    const elseIfBranches = [];
+    let elseBlocks = [];
+
+    while (this.check(TokenType.LT)) {
+      const peekKeyword = this.peek(1);
+      if (peekKeyword && peekKeyword.type === TokenType.IDENTIFIER) {
+        if (peekKeyword.value === "elseif") {
+          this.advance(); // <
+          this.advance(); // elseif
+          const elseIfCondition = this.parseExpression();
+          this.expect(TokenType.GT);
+
+          const elseIfBody = [];
+          while (!this.isAtEnd()) {
+            if (this.check(TokenType.LT)) {
+              const peekKeyword = this.peek(1);
+              if (peekKeyword && peekKeyword.type === TokenType.IDENTIFIER) {
+                if (
+                  peekKeyword.value === "else" ||
+                  peekKeyword.value === "elseif" ||
+                  (peekKeyword.value === "if" &&
+                    this.peek(0).type === TokenType.SLASH)
+                ) {
+                  break;
+                }
+              }
+              if (this.peek(1) && this.peek(1).type === TokenType.SLASH) {
+                break;
+              }
+              elseIfBody.push(this.parseTemplate());
+            } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+              elseIfBody.push(this.parseBlock());
+            } else if (this.check(TokenType.LBRACKET)) {
+              elseIfBody.push(this.parseBlock());
+            } else {
+              break;
+            }
+          }
+
+          elseIfBranches.push({
+            condition: elseIfCondition,
+            blocks: elseIfBody,
+          });
+        } else if (peekKeyword.value === "else") {
+          this.advance(); // <
+          this.advance(); // else
+          this.expect(TokenType.GT);
+
+          while (!this.isAtEnd()) {
+            if (this.check(TokenType.LT)) {
+              const peekKeyword = this.peek(1);
+              if (peekKeyword && peekKeyword.type === TokenType.SLASH) {
+                break;
+              }
+              if (
+                peekKeyword &&
+                peekKeyword.type === TokenType.IDENTIFIER &&
+                peekKeyword.value === "if" &&
+                this.peek(0).type === TokenType.SLASH
+              ) {
+                break;
+              }
+              elseBlocks.push(this.parseTemplate());
+            } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+              elseBlocks.push(this.parseBlock());
+            } else if (this.check(TokenType.LBRACKET)) {
+              elseBlocks.push(this.parseBlock());
+            } else {
+              break;
+            }
+          }
+          break; // else is always last
+        } else if (
+          peekKeyword.value === "if" &&
+          this.peek(0).type === TokenType.SLASH
+        ) {
+          // </if>
+          break;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    // Expect </if>
+    this.expect(TokenType.LT);
+    this.expect(TokenType.SLASH, "Expected / in closing if tag");
+    const closeKeyword = this.expect(TokenType.IDENTIFIER);
+    if (closeKeyword.value !== "if") {
+      this.error(`Expected </if> but got </${closeKeyword.value}>`);
+    }
+    this.expect(TokenType.GT);
+
+    return createIf(
+      condition,
+      thenBlocks,
+      elseIfBranches,
+      elseBlocks,
+      location,
+    );
+  }
+
+  /**
+   * Parse <foreach (item in collection)>...</foreach>
+   */
+  parseForeach(location) {
+    this.expect(TokenType.LPAREN);
+
+    const itemToken = this.expect(
+      TokenType.IDENTIFIER,
+      "Expected item variable",
+    );
+    const itemVar = itemToken.value;
+
+    let indexVar = null;
+    if (this.check(TokenType.COMMA)) {
+      this.advance(); // ,
+      const indexToken = this.expect(
+        TokenType.IDENTIFIER,
+        "Expected index variable",
+      );
+      indexVar = indexToken.value;
+    }
+
+    const inToken = this.expect(TokenType.IDENTIFIER, 'Expected "in" keyword');
+    if (inToken.value !== "in") {
+      this.error('Expected "in" in foreach statement');
+    }
+
+    const collectionToken = this.expect(
+      TokenType.IDENTIFIER,
+      "Expected collection name",
+    );
+    const collection = collectionToken.value;
+
+    this.expect(TokenType.RPAREN);
+    this.expect(TokenType.GT);
+
+    // Parse body
+    const body = [];
+    while (!this.check(TokenType.LT) && !this.isAtEnd()) {
+      if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+        // Tags followed by block
+        body.push(this.parseBlock());
+      } else if (this.check(TokenType.LBRACKET)) {
+        body.push(this.parseBlock());
+      } else if (this.check(TokenType.LT)) {
+        body.push(this.parseTemplate());
+      } else {
+        break;
+      }
+    }
+
+    // Expect </foreach>
+    this.expect(TokenType.LT);
+    this.expect(TokenType.SLASH);
+    const closeKeyword = this.expect(TokenType.IDENTIFIER);
+    if (closeKeyword.value !== "foreach") {
+      this.error(`Expected </foreach> but got </${closeKeyword.value}>`);
+    }
+    this.expect(TokenType.GT);
+
+    return createForeach(itemVar, indexVar, collection, body, location);
+  }
+
+  /**
+   * Parse <while (condition)>...</while>
+   */
+  parseWhile(location) {
+    const condition = this.parseExpression();
+    this.expect(TokenType.GT);
+
+    const body = [];
+    while (!this.check(TokenType.LT) && !this.isAtEnd()) {
+      if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+        body.push(this.parseBlock());
+      } else if (this.check(TokenType.LBRACKET)) {
+        body.push(this.parseBlock());
+      } else if (this.check(TokenType.LT)) {
+        body.push(this.parseTemplate());
+      } else {
+        break;
+      }
+    }
+
+    // Expect </while>
+    this.expect(TokenType.LT);
+    this.expect(TokenType.SLASH);
+    const closeKeyword = this.expect(TokenType.IDENTIFIER);
+    if (closeKeyword.value !== "while") {
+      this.error(`Expected </while> but got </${closeKeyword.value}>`);
+    }
+    this.expect(TokenType.GT);
+
+    return createWhile(condition, body, location);
+  }
+
+  /**
+   * Parse <on-data sourceName>...<on-error>...</on-data>
+   */
+  parseOnData(location) {
+    const sourceToken = this.expect(
+      TokenType.IDENTIFIER,
+      "Expected data source name",
+    );
+    const sourceName = sourceToken.value;
+
+    this.expect(TokenType.GT);
+
+    const dataBlocks = [];
+    const errorBlocks = [];
+
+    let inErrorBlock = false;
+
+    while (!this.isAtEnd()) {
+      if (this.check(TokenType.LT)) {
+        const peekKeyword = this.peek(1);
+        if (
+          peekKeyword &&
+          peekKeyword.type === TokenType.IDENTIFIER &&
+          peekKeyword.value === "on-error"
+        ) {
+          this.advance(); // <
+          this.advance(); // on-error
+          this.expect(TokenType.GT);
+          inErrorBlock = true;
+          continue;
+        } else if (peekKeyword && peekKeyword.type === TokenType.SLASH) {
+          // Closing tag
+          break;
+        } else {
+          // Template inside on-data
+          const template = this.parseTemplate();
+          if (inErrorBlock) {
+            errorBlocks.push(template);
+          } else {
+            dataBlocks.push(template);
+          }
+        }
+      } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+        const block = this.parseBlock();
+        if (inErrorBlock) {
+          errorBlocks.push(block);
+        } else {
+          dataBlocks.push(block);
+        }
+      } else if (this.check(TokenType.LBRACKET)) {
+        const block = this.parseBlock();
+        if (inErrorBlock) {
+          errorBlocks.push(block);
+        } else {
+          dataBlocks.push(block);
+        }
+      } else {
+        break;
+      }
+    }
+
+    // Expect </on-data>
+    this.expect(TokenType.LT);
+    this.expect(TokenType.SLASH);
+    const closeKeyword = this.expect(TokenType.IDENTIFIER);
+    if (closeKeyword.value !== "on-data") {
+      this.error(`Expected </on-data> but got </${closeKeyword.value}>`);
+    }
+    this.expect(TokenType.GT);
+
+    return createOnData(sourceName, dataBlocks, errorBlocks, location);
+  }
+
+  /**
+   * Parse <import "path"> or <import "path" as alias>
+   */
+  parseImport(location) {
+    const pathToken = this.expect(TokenType.STRING, "Expected import path");
+    const path = pathToken.value;
+
+    let alias = null;
+    if (this.check(TokenType.IDENTIFIER) && this.current().value === "as") {
+      this.advance(); // as
+      const aliasToken = this.expect(
+        TokenType.IDENTIFIER,
+        "Expected alias name",
+      );
+      alias = aliasToken.value;
+    }
+
+    this.expect(TokenType.GT);
+
+    return createImport(path, alias, location);
+  }
+}
+
+/**
+ * Convenience function to parse OX code
+ */
+export function parse(input, filename = "<input>") {
+  const tokens = tokenize(input, filename);
+  const parser = new Parser(tokens, filename);
+  return parser.parse();
+}

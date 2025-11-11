@@ -1,0 +1,26 @@
+{
+  "name": "oxdefinition",
+  "version": "0.1.0",
+  "description": "OX Language Definition - A powerful data definition language with template preprocessing",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/**/*.test.js",
+    "test:watch": "node --test --watch test/**/*.test.js",
+    "example": "node examples/run.js"
+  },
+  "keywords": [
+    "parser",
+    "template",
+    "data-definition",
+    "preprocessing",
+    "language"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}
