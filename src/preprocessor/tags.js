@@ -370,7 +370,7 @@ export class TagProcessor {
   /**
    * Expand tag composition (multiple #tags → child blocks)
    */
-  expandComposition(blockNode, tags) {
+  expandComposition(blockNode, tags, visited = new Set()) {
     const children = [];
 
     for (const tag of tags) {
@@ -392,8 +392,8 @@ export class TagProcessor {
       const child = this.cloneBlock(definition);
       child.id = childId;
 
-      // Pattern match to expand the child
-      const expandedChild = this.expandInstance(child, tag);
+      // Pattern match to expand the child with circular detection
+      const expandedChild = this.expandInstance(child, tag, visited);
       children.push(expandedChild);
     }
 
@@ -407,8 +407,19 @@ export class TagProcessor {
   /**
    * Expand tag instance (#tag with single tag)
    */
-  expandInstance(blockNode, tag) {
+  expandInstance(blockNode, tag, visited = new Set()) {
     const key = this.createKey(tag.name, tag.argument);
+
+    // Detect circular dependency
+    if (visited.has(key)) {
+      const chain = Array.from(visited).join(" → ");
+      throw new PreprocessError(
+        `Circular tag dependency detected: ${chain} → ${key}`,
+        "CircularTagDependency",
+        tag.location,
+      );
+    }
+
     const definition = this.registry.getInstance(key);
 
     if (!definition) {
@@ -418,6 +429,10 @@ export class TagProcessor {
         tag.location,
       );
     }
+
+    // Track this tag in the expansion chain
+    const newVisited = new Set(visited);
+    newVisited.add(key);
 
     // Merge properties (instance overrides definition)
     const mergedProperties = {
@@ -429,6 +444,8 @@ export class TagProcessor {
     let children = blockNode.children;
     if (children.length === 0 && definition.children.length > 0) {
       children = definition.children.map((c) => this.cloneBlock(c));
+      // Expand children with circular detection
+      children = this.expandTags(children, newVisited);
     }
 
     blockNode.properties = mergedProperties;
@@ -459,10 +476,18 @@ export class TagProcessor {
             // Validate no conflicts with existing properties
             this.validateModulePropertyConflicts(block, tagDef, tag);
 
+            // Create context for module getters
+            const context = {
+              blockId: block.id,
+              tagName: tag.name,
+              tagArgument: tag.argument || null,
+              existingProperties: block.properties,
+            };
+
             // Inject module properties
             for (const [propName, getter] of Object.entries(tagDef.module)) {
-              // Call the getter function to get the value
-              const value = getter();
+              // Call getter with context (supports both signatures for backward compatibility)
+              const value = getter.length === 0 ? getter() : getter(context);
 
               // Wrap value in Literal node
               const literalNode = this.wrapValueAsLiteral(value);
@@ -547,7 +572,7 @@ export class TagProcessor {
   /**
    * Expand all tag instances and compositions in AST
    */
-  expandTags(blocks) {
+  expandTags(blocks, visited = new Set()) {
     const expanded = [];
 
     for (const block of blocks) {
@@ -555,19 +580,23 @@ export class TagProcessor {
 
       if (usage.type === "composition") {
         this.validateComposition(usage.tags, block);
-        const composedBlock = this.expandComposition(block, usage.tags);
+        const composedBlock = this.expandComposition(
+          block,
+          usage.tags,
+          visited,
+        );
         expanded.push(composedBlock);
       } else if (usage.type === "instance") {
-        const expandedBlock = this.expandInstance(block, usage.tag);
+        const expandedBlock = this.expandInstance(block, usage.tag, visited);
         expanded.push(expandedBlock);
       } else {
         // No tags, keep as-is
         expanded.push(block);
       }
 
-      // Recursively expand children
+      // Recursively expand children with visited tracking
       if (block.children && block.children.length > 0) {
-        block.children = this.expandTags(block.children);
+        block.children = this.expandTags(block.children, visited);
       }
     }
 
@@ -579,28 +608,76 @@ export class TagProcessor {
    */
   cloneBlock(block) {
     return {
-      ...block,
+      type: block.type,
+      id: block.id,
+      location: block.location ? { ...block.location } : null,
       properties: this.cloneProperties(block.properties),
       children: block.children.map((c) => this.cloneBlock(c)),
-      tags: [...(block.tags || [])],
+      tags: block.tags ? block.tags.map((t) => this.cloneTag(t)) : [],
     };
   }
 
   /**
-   * Clone properties object
+   * Clone a tag node
+   */
+  cloneTag(tag) {
+    return {
+      type: tag.type,
+      tagType: tag.tagType,
+      name: tag.name,
+      argument: tag.argument,
+      location: tag.location ? { ...tag.location } : null,
+    };
+  }
+
+  /**
+   * Clone properties object (deep clone)
    */
   cloneProperties(properties) {
     const cloned = {};
     for (const [key, value] of Object.entries(properties)) {
-      if (value.type === "Array") {
-        cloned[key] = {
-          ...value,
-          elements: [...value.elements],
-        };
-      } else {
-        cloned[key] = { ...value };
-      }
+      cloned[key] = this.cloneValue(value);
     }
     return cloned;
+  }
+
+  /**
+   * Deep clone a value node (Literal, Array, Expression, etc.)
+   */
+  cloneValue(value) {
+    if (!value || typeof value !== "object") {
+      return value;
+    }
+
+    switch (value.type) {
+      case "Literal":
+        return {
+          type: "Literal",
+          valueType: value.valueType,
+          value: value.value, // Primitives are safe to copy
+          location: value.location ? { ...value.location } : null,
+        };
+
+      case "Array":
+        return {
+          type: "Array",
+          elements: value.elements.map((el) => this.cloneValue(el)),
+          location: value.location ? { ...value.location } : null,
+        };
+
+      case "Expression":
+        return {
+          type: "Expression",
+          tokens: value.tokens.map((t) => ({ ...t })), // Clone each token
+          resolved: value.resolved,
+          value: value.value,
+          location: value.location ? { ...value.location } : null,
+        };
+
+      default:
+        // For unknown types, use JSON serialization as fallback
+        // This ensures deep cloning but may be slower
+        return JSON.parse(JSON.stringify(value));
+    }
   }
 }

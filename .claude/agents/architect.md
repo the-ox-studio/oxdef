@@ -1,3 +1,9 @@
+---
+name: Architect
+description: Review the OX language parser codebase for edge cases, architectural improvements, and code quality issues at the end of each phase implementation.
+category: development-architecture
+---
+
 # Architect Agent - OX Language Parser
 
 ## Role

@@ -756,4 +756,300 @@ describe("Module Property Injection", () => {
     assert.strictEqual(injected[0].properties.y.value, 20);
     assert.strictEqual(Object.keys(injected[0].properties).length, 2);
   });
+
+  test("module getters receive context with tag information", () => {
+    const registry = new TagRegistry();
+
+    const capturedContexts = [];
+
+    registry.defineTag("entity", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        contextData: (context) => {
+          capturedContexts.push(context);
+          return `${context.tagName}:${context.tagArgument}:${context.blockId}`;
+        },
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      #entity(Player) [Hero (x: 10)]
+      #entity(Enemy) [Goblin (x: 20)]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Should have captured two contexts
+    assert.strictEqual(capturedContexts.length, 2);
+
+    // First context (Hero)
+    assert.strictEqual(capturedContexts[0].blockId, "Hero");
+    assert.strictEqual(capturedContexts[0].tagName, "entity");
+    assert.strictEqual(capturedContexts[0].tagArgument, "Player");
+
+    // Second context (Goblin)
+    assert.strictEqual(capturedContexts[1].blockId, "Goblin");
+    assert.strictEqual(capturedContexts[1].tagName, "entity");
+    assert.strictEqual(capturedContexts[1].tagArgument, "Enemy");
+
+    // Verify injected values use context
+    assert.strictEqual(
+      injected[0].properties.contextData.value,
+      "entity:Player:Hero",
+    );
+    assert.strictEqual(
+      injected[1].properties.contextData.value,
+      "entity:Enemy:Goblin",
+    );
+  });
+
+  test("module getters support backward compatibility (no context)", () => {
+    const registry = new TagRegistry();
+
+    registry.defineTag("simple", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        // Old-style getter without context parameter
+        value: () => 42,
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      #simple [Block]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Should still work
+    assert.strictEqual(injected[0].properties.value.value, 42);
+  });
+});
+
+describe("Critical Fixes", () => {
+  test("deep clone prevents shared nested object references", () => {
+    const registry = new TagRegistry();
+    registry.defineTag("component", {
+      block: { canReuse: true, canOutput: false },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    // Definition with nested array
+    const defInput = `
+      @component(Item)
+      [Item (data: {1, 2, 3})]
+    `;
+    const defDoc = parse(defInput);
+    processor.processDefinitions(defDoc.blocks);
+
+    // Two instances
+    const instInput = `
+      #component(Item) [Item1]
+      #component(Item) [Item2]
+    `;
+    const instDoc = parse(instInput);
+    const expanded = processor.expandTags(instDoc.blocks);
+
+    // Modify Item1's array element
+    expanded[0].properties.data.elements[0].value = 999;
+
+    // Item2 should remain unchanged (not affected by Item1 modification)
+    assert.strictEqual(expanded[1].properties.data.elements[0].value, 1);
+    assert.strictEqual(expanded[1].properties.data.elements[1].value, 2);
+    assert.strictEqual(expanded[1].properties.data.elements[2].value, 3);
+  });
+
+  test("deep clone handles nested arrays recursively", () => {
+    const registry = new TagRegistry();
+    registry.defineTag("component", {
+      block: { canReuse: true, canOutput: false },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const defInput = `
+      @component(Matrix)
+      [Matrix (values: {1, 2, 3})]
+    `;
+    const defDoc = parse(defInput);
+    processor.processDefinitions(defDoc.blocks);
+
+    const instInput = `
+      #component(Matrix) [M1]
+      #component(Matrix) [M2]
+    `;
+    const instDoc = parse(instInput);
+    const expanded = processor.expandTags(instDoc.blocks);
+
+    // Modify M1
+    expanded[0].properties.values.elements.push({
+      type: "Literal",
+      valueType: "number",
+      value: 4,
+    });
+
+    // M2 should have original 3 elements
+    assert.strictEqual(expanded[1].properties.values.elements.length, 3);
+  });
+
+  test("detects circular tag dependencies in direct recursion", () => {
+    const registry = new TagRegistry();
+    registry.defineTag("component", {
+      block: { canReuse: true, canOutput: false },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    // Create circular dependency: A references itself
+    const blockA = {
+      type: "Block",
+      id: "A",
+      properties: {},
+      children: [
+        {
+          type: "Block",
+          id: "ChildA",
+          properties: {},
+          children: [],
+          tags: [
+            {
+              type: "Tag",
+              tagType: "instance",
+              name: "component",
+              argument: "A",
+              location: null,
+            },
+          ],
+          location: null,
+        },
+      ],
+      tags: [],
+      location: null,
+    };
+
+    registry.registerInstance("component(A)", blockA);
+
+    const input = `#component(A) [Test]`;
+    const doc = parse(input);
+
+    assert.throws(() => {
+      processor.expandTags(doc.blocks);
+    }, /Circular tag dependency/);
+  });
+
+  test("detects circular tag dependencies in indirect recursion", () => {
+    const registry = new TagRegistry();
+    registry.defineTag("component", {
+      block: { canReuse: true, canOutput: false },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    // Create circular dependency: A -> B -> A
+    const blockA = {
+      type: "Block",
+      id: "A",
+      properties: {},
+      children: [
+        {
+          type: "Block",
+          id: "ChildB",
+          properties: {},
+          children: [],
+          tags: [
+            {
+              type: "Tag",
+              tagType: "instance",
+              name: "component",
+              argument: "B",
+              location: null,
+            },
+          ],
+          location: null,
+        },
+      ],
+      tags: [],
+      location: null,
+    };
+
+    const blockB = {
+      type: "Block",
+      id: "B",
+      properties: {},
+      children: [
+        {
+          type: "Block",
+          id: "ChildA",
+          properties: {},
+          children: [],
+          tags: [
+            {
+              type: "Tag",
+              tagType: "instance",
+              name: "component",
+              argument: "A",
+              location: null,
+            },
+          ],
+          location: null,
+        },
+      ],
+      tags: [],
+      location: null,
+    };
+
+    registry.registerInstance("component(A)", blockA);
+    registry.registerInstance("component(B)", blockB);
+
+    const input = `#component(A) [Test]`;
+    const doc = parse(input);
+
+    assert.throws(() => {
+      processor.expandTags(doc.blocks);
+    }, /Circular tag dependency/);
+  });
+
+  test("allows non-circular recursive structures", () => {
+    const registry = new TagRegistry();
+    registry.defineTag("component", {
+      block: { canReuse: true, canOutput: false },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    // A references B, B references C (no cycle)
+    const defInput = `
+      @component(C)
+      [C (label: "Base")]
+
+      @component(B)
+      [B
+        #component(C) [BChild]
+      ]
+
+      @component(A)
+      [A
+        #component(B) [AChild]
+      ]
+    `;
+    const defDoc = parse(defInput);
+    processor.processDefinitions(defDoc.blocks);
+
+    const instInput = `#component(A) [Root]`;
+    const instDoc = parse(instInput);
+
+    // Should not throw
+    const expanded = processor.expandTags(instDoc.blocks);
+
+    // Verify structure expanded correctly
+    assert.strictEqual(expanded[0].id, "Root");
+    assert.strictEqual(expanded[0].children.length, 1);
+    assert.strictEqual(expanded[0].children[0].id, "AChild");
+    assert.strictEqual(expanded[0].children[0].children.length, 1);
+    assert.strictEqual(expanded[0].children[0].children[0].id, "BChild");
+  });
 });
