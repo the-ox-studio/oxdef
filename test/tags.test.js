@@ -500,3 +500,260 @@ describe("Tag Expansion", () => {
     assert.strictEqual(expanded[1].properties.value.value, 10);
   });
 });
+
+describe("Module Property Injection", () => {
+  test("injects module properties from tag definition", () => {
+    const registry = new TagRegistry();
+
+    // Simulate external data source
+    const player = { health: 100, mana: 50 };
+
+    registry.defineTag("entity", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        health: () => player.health,
+        mana: () => player.mana,
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      #entity [Player (x: 50, y: 50)]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Should have both user-defined and module properties
+    assert.strictEqual(injected[0].properties.x.value, 50);
+    assert.strictEqual(injected[0].properties.y.value, 50);
+    assert.strictEqual(injected[0].properties.health.value, 100);
+    assert.strictEqual(injected[0].properties.mana.value, 50);
+  });
+
+  test("throws on module property conflict", () => {
+    const registry = new TagRegistry();
+
+    const player = { health: 100 };
+
+    registry.defineTag("entity", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        health: () => player.health,
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    // User tries to override module property
+    const input = `
+      #entity [Player (health: 50, x: 10)]
+    `;
+    const doc = parse(input);
+
+    assert.throws(() => {
+      processor.injectModuleProperties(doc.blocks);
+    }, /Cannot override module property 'health'/);
+  });
+
+  test("injects module properties with various types", () => {
+    const registry = new TagRegistry();
+
+    const gameState = {
+      position: { x: 10, y: 20 },
+      inventory: ["sword", "shield"],
+      isActive: true,
+      score: 42,
+      nullValue: null,
+    };
+
+    registry.defineTag("entity", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        position: () => gameState.position,
+        inventory: () => gameState.inventory,
+        isActive: () => gameState.isActive,
+        score: () => gameState.score,
+        nullValue: () => gameState.nullValue,
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      #entity [Player]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    const props = injected[0].properties;
+
+    // Object (serialized as JSON string)
+    assert.strictEqual(props.position.type, "Literal");
+    assert.strictEqual(props.position.valueType, "string");
+    assert.strictEqual(props.position.value, JSON.stringify({ x: 10, y: 20 }));
+
+    // Array
+    assert.strictEqual(props.inventory.type, "Array");
+    assert.strictEqual(props.inventory.elements.length, 2);
+    assert.strictEqual(props.inventory.elements[0].value, "sword");
+    assert.strictEqual(props.inventory.elements[1].value, "shield");
+
+    // Boolean
+    assert.strictEqual(props.isActive.type, "Literal");
+    assert.strictEqual(props.isActive.valueType, "boolean");
+    assert.strictEqual(props.isActive.value, true);
+
+    // Number
+    assert.strictEqual(props.score.type, "Literal");
+    assert.strictEqual(props.score.valueType, "number");
+    assert.strictEqual(props.score.value, 42);
+
+    // Null
+    assert.strictEqual(props.nullValue.type, "Literal");
+    assert.strictEqual(props.nullValue.valueType, "null");
+    assert.strictEqual(props.nullValue.value, null);
+  });
+
+  test("injects module properties into nested blocks", () => {
+    const registry = new TagRegistry();
+
+    const player = { health: 100 };
+
+    registry.defineTag("entity", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        health: () => player.health,
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      [Container
+        #entity [Player (x: 50)]
+        [Other
+          #entity [Enemy (x: 100)]
+        ]
+      ]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Player should have health
+    assert.strictEqual(injected[0].children[0].properties.health.value, 100);
+
+    // Enemy should also have health
+    assert.strictEqual(
+      injected[0].children[1].children[0].properties.health.value,
+      100,
+    );
+  });
+
+  test("handles multiple tags with different module properties", () => {
+    const registry = new TagRegistry();
+
+    const player = { health: 100 };
+    const ui = { theme: "dark" };
+
+    registry.defineTag("entity", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        health: () => player.health,
+      },
+    });
+
+    registry.defineTag("styled", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        theme: () => ui.theme,
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      #entity [Player (x: 50)]
+      #styled [Button (label: "Click")]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Player has health but not theme
+    assert.strictEqual(injected[0].properties.health.value, 100);
+    assert.strictEqual(injected[0].properties.theme, undefined);
+
+    // Button has theme but not health
+    assert.strictEqual(injected[1].properties.theme.value, "dark");
+    assert.strictEqual(injected[1].properties.health, undefined);
+  });
+
+  test("module properties are called fresh each time", () => {
+    const registry = new TagRegistry();
+
+    let counter = 0;
+    const state = {
+      getCount: () => {
+        counter += 1;
+        return counter;
+      },
+    };
+
+    registry.defineTag("counter", {
+      block: { canReuse: false, canOutput: true },
+      module: {
+        count: () => state.getCount(),
+      },
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      #counter [Counter1]
+      #counter [Counter2]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Each call should increment the counter
+    assert.strictEqual(injected[0].properties.count.value, 1);
+    assert.strictEqual(injected[1].properties.count.value, 2);
+  });
+
+  test("handles empty module definition", () => {
+    const registry = new TagRegistry();
+
+    registry.defineTag("simple", {
+      block: { canReuse: false, canOutput: true },
+      module: {}, // No module properties
+    });
+
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      #simple [Block (x: 10)]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Should only have user-defined properties
+    assert.strictEqual(injected[0].properties.x.value, 10);
+    assert.strictEqual(Object.keys(injected[0].properties).length, 1);
+  });
+
+  test("handles blocks without tags", () => {
+    const registry = new TagRegistry();
+    const processor = new TagProcessor(registry);
+
+    const input = `
+      [Block (x: 10, y: 20)]
+    `;
+    const doc = parse(input);
+    const injected = processor.injectModuleProperties(doc.blocks);
+
+    // Should remain unchanged
+    assert.strictEqual(injected[0].properties.x.value, 10);
+    assert.strictEqual(injected[0].properties.y.value, 20);
+    assert.strictEqual(Object.keys(injected[0].properties).length, 2);
+  });
+});

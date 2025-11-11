@@ -82,8 +82,12 @@ Created working examples:
 ```
 ✔ Tokenizer (18 tests)
 ✔ Parser (25 tests)
+✔ Tag Registry (5 tests)
+✔ Tag Processor (11 tests)
+✔ Tag Expansion (5 tests)
+✔ Module Property Injection (8 tests)
 ───────────────────────
-✔ Total: 43/43 passing
+✔ Total: 72/72 passing
 ```
 
 ## What's Working
@@ -91,24 +95,70 @@ Created working examples:
 1. **Complete OX syntax parsing** - All syntax from specification is recognized
 2. **Nested structures** - Blocks, templates, and expressions nest correctly
 3. **Tag support** - Both `@tag` (definition) and `#tag` (instance) parse correctly
-4. **Template syntax** - All template types (`<set>`, `<if>`, `<foreach>`, etc.) work
-5. **Error reporting** - Parse errors include file location and context
-6. **Comments** - Line and block comments are properly skipped
-7. **Expression capture** - Expressions stored as token sequences for later evaluation
+4. **Tag expansion** - Pattern matching, composition, and instance expansion fully functional
+5. **Module property injection** - External data injection with conflict validation
+6. **Template syntax** - All template types (`<set>`, `<if>`, `<foreach>`, etc.) work
+7. **Error reporting** - Parse errors include file location and context
+8. **Comments** - Line and block comments are properly skipped
+9. **Expression capture** - Expressions stored as token sequences for later evaluation
+
+## Completed (Phase 2)
+
+### ✅ Tag System
+**File**: `src/preprocessor/tags.js`
+
+Implemented complete tag system supporting:
+- **TagRegistry**: Manages tag definitions and instance storage
+  - `defineTag()`: Define tags with block, module, and descriptor configuration
+  - `registerInstance()`: Store @tag definitions from OX files
+  - `getInstance()`: Retrieve tag definitions for pattern matching
+- **TagProcessor**: Handles tag validation and processing
+  - Tag usage detection (definition, instance, composition)
+  - Validation rules enforcement
+  - Mixed tag type prevention (@tag and #tag)
+
+**Tests**: 11/11 passing (Tag Registry + Tag Processor)
+
+## Completed (Phase 3-4)
+
+### ✅ Tag Expansion
+**File**: `src/preprocessor/tags.js`
+
+Implemented tag expansion pipeline:
+- **Tag Composition** (multiple `#tag` → child generation)
+  - Auto-generates child IDs: `{parentId}_{tagName}`
+  - Validates no properties/children on composition blocks
+  - Recursively expands generated children
+- **Tag Instance Expansion** (single `#tag` pattern matching)
+  - Merges properties (instance overrides definition)
+  - Inherits children from definition if none provided
+  - Deep clones blocks to prevent shared references
+- **Nested Tag Support**: Recursively processes all levels
+
+**Tests**: 5/5 passing (Tag Expansion)
+
+## Completed (Phase 5)
+
+### ✅ Module Property Injection
+**File**: `src/preprocessor/tags.js`
+
+Implemented module property injection system:
+- **Module Properties**: External data injection into tagged blocks
+  - Simple getter functions called during preprocessing
+  - Values automatically wrapped as Literal AST nodes
+  - Supports all types: primitives, arrays, objects (JSON serialized)
+- **Conflict Validation**: Prevents property name collisions
+  - Module properties cannot be overridden in OX
+  - Throws PreprocessError on conflicts
+- **Type Wrapping**: Automatic conversion to AST nodes
+  - `wrapValueAsLiteral()`: Converts JS values to Literal nodes
+  - Handles: string, number, boolean, null, arrays, objects
+
+**Tests**: 8/8 passing (Module Property Injection)
 
 ## Next Steps (In Order)
 
-### Phase 2: Tag System
-- [ ] Tag registry implementation
-- [ ] Tag validation rules (definition vs instance)
-- [ ] Pattern matching for tag instances
-
-### Phase 3-4: Tag Expansion
-- [ ] Tag composition (multiple `#tag` → child generation)
-- [ ] Tag instance expansion (merge properties, inherit children)
-- [ ] Module property injection
-
-### Phase 5-7: Data Sources
+### Phase 6-7: Data Sources
 - [ ] Data source detection in AST
 - [ ] Async execution framework
 - [ ] Error handling for data sources
@@ -153,9 +203,13 @@ This separation ensures:
 
 1. Expressions are not yet evaluated (stored as token sequences)
 2. Templates are not yet expanded (stored in AST)
-3. Tags are recognized but not processed (no registry yet)
-4. Data sources are parsed but not executed
-5. No multi-file resolution yet
-6. No streaming support yet
+3. Data sources are parsed but not executed
+4. No multi-file resolution yet
+5. No streaming support yet
 
 These are all expected - they're part of the preprocessing phases that come next.
+
+**Note**: Tag system (Phases 2-5) is now complete, including:
+- Tag definitions and instances
+- Tag composition and expansion
+- Module property injection with conflict validation

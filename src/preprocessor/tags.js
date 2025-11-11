@@ -439,6 +439,112 @@ export class TagProcessor {
   }
 
   /**
+   * Inject module properties into blocks with tags
+   * Module properties are computed from external scope
+   */
+  injectModuleProperties(blocks) {
+    const injected = [];
+
+    for (const block of blocks) {
+      // Check if block has any tags
+      if (block.tags && block.tags.length > 0) {
+        for (const tag of block.tags) {
+          const tagDef = this.registry.getTag(tag.name);
+
+          if (
+            tagDef &&
+            tagDef.module &&
+            Object.keys(tagDef.module).length > 0
+          ) {
+            // Validate no conflicts with existing properties
+            this.validateModulePropertyConflicts(block, tagDef, tag);
+
+            // Inject module properties
+            for (const [propName, getter] of Object.entries(tagDef.module)) {
+              // Call the getter function to get the value
+              const value = getter();
+
+              // Wrap value in Literal node
+              const literalNode = this.wrapValueAsLiteral(value);
+
+              // Add to block properties
+              block.properties[propName] = literalNode;
+            }
+          }
+        }
+      }
+
+      injected.push(block);
+
+      // Recursively inject into children
+      if (block.children && block.children.length > 0) {
+        block.children = this.injectModuleProperties(block.children);
+      }
+    }
+
+    return injected;
+  }
+
+  /**
+   * Validate that module properties don't conflict with existing properties
+   */
+  validateModulePropertyConflicts(blockNode, tagDef, tag) {
+    const moduleProps = Object.keys(tagDef.module);
+    const existingProps = Object.keys(blockNode.properties);
+
+    for (const propName of moduleProps) {
+      if (existingProps.includes(propName)) {
+        throw new PreprocessError(
+          `Cannot override module property '${propName}' from tag '${tag.name}'`,
+          "ModulePropertyConflict",
+          blockNode.location,
+        );
+      }
+    }
+  }
+
+  /**
+   * Wrap a JavaScript value as a Literal AST node
+   */
+  wrapValueAsLiteral(value) {
+    // Determine the type
+    if (value === null) {
+      return { type: "Literal", valueType: "null", value: null };
+    }
+
+    if (typeof value === "boolean") {
+      return { type: "Literal", valueType: "boolean", value };
+    }
+
+    if (typeof value === "number") {
+      return { type: "Literal", valueType: "number", value };
+    }
+
+    if (typeof value === "string") {
+      return { type: "Literal", valueType: "string", value };
+    }
+
+    if (Array.isArray(value)) {
+      // Wrap each element as a literal
+      const elements = value.map((v) => this.wrapValueAsLiteral(v));
+      return { type: "Array", elements };
+    }
+
+    if (typeof value === "object") {
+      // For objects, convert to a string representation
+      // Users can implement custom serialization if needed
+      return {
+        type: "Literal",
+        valueType: "string",
+        value: JSON.stringify(value),
+      };
+    }
+
+    // Fallback: convert to string
+    return { type: "Literal", valueType: "string", value: String(value) };
+  }
+
+  /**
    * Expand all tag instances and compositions in AST
    */
   expandTags(blocks) {
