@@ -529,6 +529,318 @@ parser.defineTag('component', {
 
 ---
 
+## Macro System
+
+The macro system provides users with powerful meta-programming capabilities during preprocessing. Users can intercept blocks during evaluation, control processing order, and manipulate properties before the final tree is generated.
+
+### Two Macro Hooks
+
+#### 1. Pre-Parse Hook (`onParse`)
+
+Called **once** before any preprocessing begins, giving access to the raw parsed tree:
+
+```javascript
+oxparser.init.onParse = function() {
+  // Full parsed tree available
+  // Templates, expressions, tags all intact (not evaluated)
+  // Use for: code generation, analysis, custom transformations
+
+  // Can walk entire tree
+  oxparser.walk(oxparser.tree, (block, parent) => {
+    console.log(`Block: ${block.id}, Tags: ${block.tags}`);
+  });
+
+  // Can terminate preprocessing early
+  if (someCondition) {
+    oxparser.finish(); // Skip all preprocessing, return current tree
+  }
+};
+```
+
+**Use cases:**
+- Code generation requiring template/expression visibility
+- Static analysis of OX structure
+- Custom preprocessing transformations
+- Early termination for partial processing
+
+#### 2. Macro Walk Hook (`onWalk`)
+
+Called for **every block** during preprocessing, after block properties are evaluated but before children are processed:
+
+```javascript
+oxparser.macros.onWalk = function(block, parent) {
+  // block.properties: EVALUATED (expressions resolved to literals)
+  // block.children: EXIST but properties NOT YET evaluated
+  // parent: parent block (or null if root)
+
+  // User controls child evaluation order
+  const next = oxparser.macros.nextBlock();
+  if (next) {
+    oxparser.macros.invokeWalk(next, block);
+    // After this: next.properties are evaluated
+  }
+
+  // Modify parent based on evaluated children
+  block.properties.width = next.properties.width + 10;
+};
+```
+
+**Use cases:**
+- Auto-sizing layouts (parent dimensions from children)
+- Conditional child processing (skip hidden branches)
+- Property validation and defaults
+- Dynamic property computation
+
+### Evaluation Flow with Macros
+
+**Without macros:**
+```
+Parse → Evaluate Block A → Evaluate Child 1 → Evaluate Child 2 → Final Tree
+```
+
+**With macros:**
+```
+Parse → onParse() →
+  Evaluate Block A properties →
+  onWalk(Block A) →
+    User can:
+      - Peek at Child 1 (nextBlock)
+      - Evaluate Child 1 (invokeWalk)
+      - Read Child 1 properties (now literals)
+      - Modify Block A properties
+  Return from onWalk →
+  Auto-evaluate remaining children →
+  Commit Block A to final tree
+```
+
+### Macro API Reference
+
+#### Pre-Parse API
+
+```javascript
+// Set pre-parse callback
+oxparser.init.onParse = function() {
+  // Called once before preprocessing
+  // Full tree available in oxparser.tree
+};
+
+// Early termination
+oxparser.finish();
+// Stops preprocessing immediately
+// Returns current tree state
+```
+
+#### Macro Walk API
+
+```javascript
+// Set macro walk callback
+oxparser.macros.onWalk = function(block, parent) {
+  // Called for each block during preprocessing
+  // block: current block (properties evaluated)
+  // parent: parent block or null
+};
+
+// Peek at next block
+const next = oxparser.macros.nextBlock();
+// Returns: next block or null
+// Doesn't advance cursor
+// next.properties still contain expressions (not evaluated)
+
+// Manually evaluate block
+oxparser.macros.invokeWalk(block, parent);
+// Advances cursor to this block
+// Evaluates block's properties (resolves expressions)
+// Calls onWalk(block, parent) recursively
+// After return: block.properties are literals
+
+// Move cursor backward
+oxparser.macros.back();
+// Moves cursor back one position
+// Use with caution - can create infinite loops
+
+// Throw macro error
+oxparser.macros.throwError(message);
+// Stops preprocessing with error
+// User-controlled validation errors
+```
+
+### Property Evaluation Guarantees
+
+When `onWalk(block, parent)` is called:
+
+**Guaranteed evaluated:**
+- `block.properties` - All expressions resolved to literals
+- `parent.properties` - Parent was already processed
+- Module-injected properties - Available and evaluated
+
+**Not yet evaluated:**
+- `block.children[].properties` - Still contain expressions
+- Next sibling properties - Until you call `invokeWalk()`
+
+**To evaluate a child:**
+```javascript
+const child = oxparser.macros.nextBlock();
+oxparser.macros.invokeWalk(child, block);
+// Now: child.properties are literals
+```
+
+### Use Case Examples
+
+#### Auto-Sizing Container
+
+```javascript
+oxparser.macros.onWalk = function(block, parent) {
+  if (block.properties["auto-size"] === true) {
+    let totalWidth = 0;
+    let totalHeight = 0;
+    let next;
+
+    // Manually process all children
+    while ((next = oxparser.macros.nextBlock()) && next.parent === block) {
+      oxparser.macros.invokeWalk(next, block); // Evaluate child
+
+      totalWidth += next.properties.width || 0;
+      totalHeight = Math.max(totalHeight, next.properties.height || 0);
+    }
+
+    // Set parent size based on children
+    block.properties.width = totalWidth;
+    block.properties.height = totalHeight;
+  }
+};
+```
+
+**OX input:**
+```ox
+[Container (auto-size: true, padding: 10)
+  [Item (width: 100, height: 50)]
+  [Item (width: 150, height: 75)]
+  [Item (width: 80, height: 60)]
+]
+```
+
+**Result:**
+```javascript
+{
+  id: "Container",
+  properties: {
+    "auto-size": true,
+    padding: 10,
+    width: 330,   // 100 + 150 + 80
+    height: 75    // max(50, 75, 60)
+  }
+}
+```
+
+#### Conditional Child Processing
+
+```javascript
+oxparser.macros.onWalk = function(block, parent) {
+  // Only process children if parent is visible
+  if (block.properties.visible === false) {
+    // Skip all children - won't be in final tree
+    return;
+  }
+
+  // Let preprocessor auto-evaluate children
+};
+```
+
+**OX input:**
+```ox
+[Container (visible: false)
+  [ExpensiveComponent]  // Won't be evaluated or in final tree
+  [AnotherComponent]    // Won't be evaluated or in final tree
+]
+```
+
+#### Property Validation
+
+```javascript
+oxparser.macros.onWalk = function(block, parent) {
+  // Validate required properties
+  if (block.id === "Button" && !block.properties.label) {
+    oxparser.macros.throwError(`Button at ${block.metadata.line} must have a label property`);
+  }
+
+  // Set defaults
+  if (block.id === "Container" && block.properties.padding === undefined) {
+    block.properties.padding = 0;
+  }
+
+  // Type validation
+  if (block.properties.width && typeof block.properties.width !== 'number') {
+    oxparser.macros.throwError(`Width must be a number, got ${typeof block.properties.width}`);
+  }
+};
+```
+
+#### Peek and Conditional Evaluation
+
+```javascript
+oxparser.macros.onWalk = function(block, parent) {
+  const next = oxparser.macros.nextBlock();
+
+  if (next && next.id === "Separator") {
+    // Don't process separator if it's the last child
+    const afterSeparator = oxparser.macros.nextBlock(); // Peek further
+    if (!afterSeparator) {
+      // Skip separator - it's trailing
+      return;
+    }
+    oxparser.macros.back(); // Go back to separator
+  }
+
+  // Let preprocessor handle normal processing
+};
+```
+
+#### Code Generation with Pre-Parse
+
+```javascript
+oxparser.init.onParse = function() {
+  // Generate TypeScript types from OX structure
+  const types = [];
+
+  oxparser.walk(oxparser.tree, (block) => {
+    if (block.tags.includes('component')) {
+      const props = Object.keys(block.properties).join(', ');
+      types.push(`interface ${block.id} { ${props} }`);
+    }
+  });
+
+  fs.writeFileSync('generated-types.ts', types.join('\n'));
+
+  // Continue with normal preprocessing
+};
+```
+
+### Important Notes
+
+**Cursor Management:**
+- `nextBlock()` is a **peek** - doesn't advance cursor
+- `invokeWalk()` is an **advance** - processes block and moves cursor
+- `back()` is a **rewind** - moves cursor backward
+- Users must be careful to avoid infinite loops
+
+**Property Modification:**
+- Can modify: `block.properties.width = 100;`
+- Can add: `block.properties.customProp = "value";`
+- Cannot delete (not recommended): `delete block.properties.width;`
+- Modifications are permanent in final tree
+
+**Auto-Processing:**
+- If user doesn't manually walk children, preprocessor auto-evaluates them
+- Depth-first traversal is default
+- User only needs control when custom ordering required
+
+**Error Handling:**
+- Use `throwError()` for validation failures
+- Errors stop preprocessing immediately
+- User is responsible for loop prevention with `back()`
+
+---
+
 ### Template Syntax
 
 Templates use angle brackets `<>` with explicit parentheses for expressions.
@@ -1223,7 +1535,19 @@ For all blocks with tags that have module definitions:
   - Error if property name conflicts with existing property
 ```
 
-### Phase 6: Data Source Detection
+### Phase 6: Pre-Parse Macro Hook (NEW)
+```
+If oxparser.init.onParse is defined:
+  - Call onParse() once
+  - User can:
+    * Walk full parsed tree (templates/expressions intact)
+    * Generate code from raw structure
+    * Call oxparser.finish() for early termination
+  - If finish() called: skip remaining phases, return current tree
+  - Otherwise: continue to next phase
+```
+
+### Phase 7: Data Source Detection
 ```
 Scan for <on-data> blocks:
   - Build dependency graph
@@ -1231,7 +1555,7 @@ Scan for <on-data> blocks:
   - Determine fetch order (parallel vs sequential)
 ```
 
-### Phase 7: Data Source Execution
+### Phase 8: Data Source Execution
 ```
 Execute data source fetches:
   - Call async functions (respecting timeout)
@@ -1239,36 +1563,48 @@ Execute data source fetches:
   - Capture errors per source
 ```
 
-### Phase 8: Template Expansion
+### Phase 9: Template Expansion with Macro Walk (MODIFIED)
 ```
-Expand templates in order:
-  - <set> variable declarations
-  - <if>/<elseif>/<else> conditionals
-  - <foreach> loops
-  - <on-data> with fetched data (or <on-error> if failed)
-  - <while> loops (if supported)
-  - Inject data into template blocks
-  - Remove template markers
+Expand templates and evaluate expressions (depth-first):
+  For each block:
+    9a. Evaluate templates (<if>, <foreach>, <on-data>, etc.)
+    9b. For each resulting block:
+        - Evaluate block's property expressions → literals
+        - Mark block as "semi-final"
+
+        If oxparser.macros.onWalk is defined:
+          - Call onWalk(block, parent)
+          - User can:
+            * Read block.properties (evaluated literals)
+            * Peek at children via nextBlock()
+            * Manually evaluate children via invokeWalk()
+            * Modify block.properties
+            * Throw validation errors via throwError()
+          - User returns from onWalk
+
+        - Auto-evaluate any unwalked children (depth-first)
+        - Each child goes through same process (9a-9b recursively)
+        - Mark block as "final"
+        - Commit to tree
 ```
 
-### Phase 9: Expression Resolution
+### Phase 10: Final Expression Resolution
 ```
-Resolve all expressions (two-pass):
-  Pass 1: Build complete block tree
-  Pass 2: Resolve expressions:
-    - Resolve template variables
-    - Resolve $parent, $this, $BlockId references
-    - Evaluate arithmetic, logical, comparison operators
-    - Call user-supplied functions
-    - Convert to literals
+Resolve any remaining expressions:
+  - Resolve template variables
+  - Resolve $parent, $this, $BlockId references
+  - Evaluate arithmetic, logical, comparison operators
+  - Call user-supplied functions
+  - Convert to literals
 ```
 
-### Phase 10: Output Pure Tree
+### Phase 11: Output Pure Tree
 ```
 Final tree contains:
   - Regular blocks
   - Tag instances (fully expanded and resolved)
   - Module properties injected
+  - User-modified properties (from macro walk)
   - Expressions resolved to literals
   - NO tag definitions (if canOutput: false)
   - NO template markers
@@ -1776,13 +2112,6 @@ const streamTransaction = streamParser.createTransaction({
         }
       };
     }
-  },
-  descriptor: {
-    attributes: [
-      {
-        type: "identifier"
-      }
-    ]
   }
 });
 ```
@@ -2531,7 +2860,76 @@ parser.walk(result.tree, (block, parent) => {
 
 ---
 
-### Phase 11: Serialization and Caching
+### Phase 11: Macro System
+
+**Goal:** Implement macro hooks for user-controlled preprocessing and meta-programming.
+
+**Tasks:**
+
+1. **Pre-Parse Hook (`onParse`)**
+   - Call `oxparser.init.onParse()` before preprocessing
+   - Provide access to full parsed tree (templates/expressions intact)
+   - Implement `oxparser.finish()` for early termination
+   - Expose `oxparser.tree` for walking
+   - Allow code generation use cases
+
+2. **Macro Walk Hook (`onWalk`)**
+   - Call `oxparser.macros.onWalk(block, parent)` during preprocessing
+   - Hook invoked after block properties evaluated, before children
+   - Pass evaluated block and parent to callback
+   - Integrate with template expansion phase
+
+3. **Cursor Control API**
+   - Implement `oxparser.macros.nextBlock()` (peek without advancing)
+   - Implement `oxparser.macros.invokeWalk(block, parent)` (evaluate and advance)
+   - Implement `oxparser.macros.back()` (rewind cursor)
+   - Track cursor state during preprocessing
+   - Prevent infinite loops (cycle detection)
+
+4. **Property Evaluation Control**
+   - Evaluate block properties before calling onWalk
+   - Leave children properties unevaluated until invokeWalk
+   - Allow user to modify properties in onWalk
+   - Auto-evaluate remaining children after onWalk returns
+   - Ensure modifications persist to final tree
+
+5. **Error Handling**
+   - Implement `oxparser.macros.throwError(message)` for user validation
+   - Stop preprocessing on macro error
+   - Include location information in error messages
+   - Distinguish macro errors from preprocessing errors
+
+6. **Auto-Processing Behavior**
+   - Implement default depth-first traversal
+   - Auto-evaluate unwalked children after onWalk
+   - Mark blocks as "semi-final" (evaluated) vs "final" (committed)
+   - Ensure all blocks get processed (manual or automatic)
+
+7. **Integration with Existing Phases**
+   - Integrate onParse with Phase 6
+   - Integrate onWalk with Phase 9 (template expansion)
+   - Ensure module properties available before onWalk
+   - Coordinate with expression resolution
+
+8. **Tests**
+   - onParse callback execution
+   - Early termination with finish()
+   - onWalk invocation for each block
+   - Manual child evaluation with invokeWalk
+   - Cursor management (nextBlock, back)
+   - Property modification persistence
+   - Auto-processing of unwalked children
+   - Error handling with throwError
+   - Integration with templates and expressions
+   - Use case scenarios (auto-sizing, validation, etc.)
+
+**Deliverable:** Complete macro system enabling user-controlled preprocessing and meta-programming.
+
+**Estimated Time:** 3-4 weeks
+
+---
+
+### Phase 12: Serialization and Caching
 
 **Goal:** Serialize parsed/preprocessed trees for caching.
 
@@ -2563,7 +2961,7 @@ parser.walk(result.tree, (block, parent) => {
 
 ---
 
-### Phase 12: Documentation and Examples
+### Phase 13: Documentation and Examples
 
 **Goal:** Comprehensive documentation and example use cases.
 
@@ -2574,11 +2972,13 @@ parser.walk(result.tree, (block, parent) => {
    - Transaction API
    - Walking API
    - Tag API
+   - Macro API (onParse, onWalk, cursor control)
 
 2. **Language Reference**
    - Syntax specification
    - Template reference
    - Expression reference
+   - Macro system guide
    - Best practices
 
 3. **Examples**
@@ -2587,12 +2987,15 @@ parser.walk(result.tree, (block, parent) => {
    - Configuration files
    - Game engine entities
    - Database migrations
+   - Auto-sizing layouts with macros
+   - Property validation with macros
 
 4. **Tutorials**
    - Getting started guide
    - Building a simple interpreter
    - Working with data sources
    - Multi-file projects
+   - Using macros for meta-programming
 
 **Deliverable:** Full documentation suite.
 
@@ -2600,7 +3003,7 @@ parser.walk(result.tree, (block, parent) => {
 
 ---
 
-### Phase 13: Testing and Polish
+### Phase 14: Testing and Polish
 
 **Goal:** Comprehensive test suite and production readiness.
 
@@ -2639,7 +3042,7 @@ parser.walk(result.tree, (block, parent) => {
 
 ## Total Estimated Timeline
 
-**Core Development:** 24-32 weeks (6-8 months)
+**Core Development:** 30-38 weeks (7-9 months)
 
 **By Phase:**
 - Phase 1 (Core Parser): 2-3 weeks
@@ -2651,10 +3054,11 @@ parser.walk(result.tree, (block, parent) => {
 - Phase 7 (Multi-File): 2 weeks
 - Phase 8 (Streaming): 2-3 weeks
 - Phase 9 (Walking): 1-2 weeks
-- Phase 10 (Tags): 1-2 weeks
-- Phase 11 (Serialization): 1-2 weeks
-- Phase 12 (Documentation): 2-3 weeks
-- Phase 13 (Testing/Polish): 2-3 weeks
+- Phase 10 (Tags): 3-4 weeks
+- Phase 11 (Macros): 3-4 weeks
+- Phase 12 (Serialization): 1-2 weeks
+- Phase 13 (Documentation): 2-3 weeks
+- Phase 14 (Testing/Polish): 2-3 weeks
 
 ---
 
@@ -2842,6 +3246,48 @@ tx.clearDataSourceCache();
 // State
 tx.reset();
 tx.clone();
+```
+
+### Macro API
+
+```javascript
+// Pre-parse hook (called once before preprocessing)
+oxparser.init.onParse = function() {
+  // Full parsed tree available
+  // Templates and expressions not yet evaluated
+  // Can walk tree: oxparser.walk(oxparser.tree, callback)
+  // Can terminate early: oxparser.finish()
+};
+
+// Macro walk hook (called for each block during preprocessing)
+oxparser.macros.onWalk = function(block, parent) {
+  // block: current block (properties evaluated)
+  // parent: parent block or null
+
+  // User can:
+  // - Read block.properties (literals)
+  // - Peek at children (nextBlock)
+  // - Manually evaluate children (invokeWalk)
+  // - Modify properties
+  // - Validate and throw errors
+};
+
+// Cursor control
+const next = oxparser.macros.nextBlock();
+// Returns next block or null (peek, doesn't advance)
+
+oxparser.macros.invokeWalk(block, parent);
+// Evaluate block properties, call onWalk recursively, advance cursor
+
+oxparser.macros.back();
+// Move cursor backward one position (use with caution)
+
+oxparser.macros.throwError(message);
+// Stop preprocessing with user-defined error
+
+// Early termination
+oxparser.finish();
+// Stop preprocessing immediately, return current tree state
 ```
 
 ### Block Structure
