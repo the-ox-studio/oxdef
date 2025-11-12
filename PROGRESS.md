@@ -438,3 +438,106 @@ These are expected limitations - they're part of Phase 11 and beyond.
 **Current Status**: 199/205 tests passing (97.1%)
 
 **Next**: Phase 11 - Parser enhancement for templates in loops, function calls
+
+## Completed (Phase 11)
+
+### ✅ Tree Walker API
+**File**: `src/walker/walker.js`
+
+Implemented complete tree walking system with two walker classes:
+
+#### TreeWalker - General Purpose Traversal
+**Features**:
+- **Depth-First Traversal**: Pre-order (parent before children) and post-order (children before parent)
+- **Breadth-First Traversal**: Level-by-level traversal
+- **Filtering**: Skip nodes based on predicate function
+- **Early Termination**: Stop traversal or skip children with WalkerControl
+- **Parent Tracking**: Maintains parent chain during traversal
+- **State Management**: Cursor tracking for macro system integration
+
+**Traversal Orders**:
+- `TraversalOrder.PRE` - Visit parent before children (default)
+- `TraversalOrder.POST` - Visit children before parent
+- `TraversalOrder.BREADTH` - Breadth-first (level by level)
+
+**Control Flow**:
+- `WalkerControl.CONTINUE` - Continue normal traversal
+- `WalkerControl.STOP` - Stop entire traversal immediately  
+- `WalkerControl.SKIP` - Skip children of current node
+
+#### MacroWalker - Cursor Control for Macro System
+**Features**:
+- **Cursor Control**: Fine-grained control over traversal order
+- **Peek Operations**: View next block without advancing cursor
+- **Manual Invocation**: Explicitly process specific blocks
+- **Backward Movement**: Move cursor backward (for advanced macro patterns)
+- **Auto-Processing**: Automatically processes children not manually walked
+
+**API Methods**:
+- `nextBlock()` - Peek at next block without advancing cursor
+- `peekNext()` - Peek at next block with parent reference
+- `current()` - Get current block with parent
+- `invokeWalk(node, parent)` - Manually advance to and process block
+- `back(steps)` - Move cursor backward (use with caution)
+- `getRemainingChildren(parent)` - Get unprocessed children of parent
+- `stop()` - Halt traversal immediately
+
+#### Utility Functions
+**Convenience functions for common operations**:
+- `walk(tree, callback, options)` - Simple tree walking
+- `findNode(tree, predicate)` - Find first matching node
+- `findAllNodes(tree, predicate)` - Find all matching nodes
+- `findByTag(tree, tagName)` - Filter nodes by tag
+- `findByProperty(tree, propertyName, value)` - Filter nodes by property
+- `getAncestors(tree, targetNode)` - Get all ancestors of a node
+
+**Example Usage**:
+```javascript
+import { walk, findByTag, TraversalOrder } from './src/walker/walker.js';
+
+// Simple depth-first walk
+walk(tree, (node, parent) => {
+  console.log(node.id, parent?.id);
+});
+
+// Breadth-first with filtering
+walk(tree, (node) => {
+  console.log(node.id);
+}, { 
+  order: TraversalOrder.BREADTH,
+  filter: (node) => node.properties.visible === true
+});
+
+// Find all nodes with 'component' tag
+const components = findByTag(tree, 'component');
+```
+
+**Tests**: 31/31 passing
+- TreeWalker - Depth-First Traversal (5 tests)
+- TreeWalker - Breadth-First Traversal (2 tests)  
+- TreeWalker - Control Flow (2 tests)
+- TreeWalker - Filtering (2 tests)
+- Utility Functions (6 tests)
+- MacroWalker - Cursor Control (5 tests)
+- MacroWalker - Auto-processing (2 tests)
+- Edge Cases and Integration (7 tests)
+
+**Overall Test Status**: 230/236 passing (97.5%)
+- Phase 11: 31/31 tests passing (100%)
+- Phase 1-10: 199/205 tests passing (97.1%)
+- 6 failures from Phase 9 (templates in loop bodies - parser limitation)
+
+**Architecture Highlights**:
+- TreeWalker for user-facing API and general traversal needs
+- MacroWalker for preprocessing system integration (Phase 12)
+- Clean separation: simple `walk()` function for common cases, full walker classes for advanced control
+- No dependencies on other unfinished features
+- Zero runtime overhead (used during preprocessing only)
+- Reusable for serialization, debugging, and user code generation
+
+**Integration Points**:
+- **Phase 12 (Macro System)**: MacroWalker provides cursor control for `onWalk` hook
+- **User Code**: TreeWalker and utility functions for tree interpretation
+- **Debugging**: Walk tree to inspect structure and properties
+- **Serialization**: Walk tree to generate JSON or other formats
+
