@@ -28,13 +28,15 @@ export class FileLoader {
    * @param {Object} options - Optional configuration
    * @param {number} options.maxFileSize - Maximum file size in bytes (default: 10MB)
    * @param {number} options.maxCacheSize - Maximum total cache size in bytes (default: 100MB)
+   * @param {boolean} options.enableCacheEviction - Enable LRU eviction when cache is full (default: true)
    */
   constructor(config, options = {}) {
     this.config = config;
     this.maxFileSize = options.maxFileSize || MAX_FILE_SIZE;
     this.maxCacheSize = options.maxCacheSize || MAX_CACHE_SIZE;
+    this.enableCacheEviction = options.enableCacheEviction !== false;
 
-    // Cache: filePath -> { ast, content, filePath, size }
+    // Cache: filePath -> { ast, content, filePath, size, lastAccessed }
     this.cache = new Map();
 
     // Track load order for debugging
@@ -42,6 +44,69 @@ export class FileLoader {
 
     // Security: Track aggregate cache size
     this.currentCacheSize = 0;
+  }
+
+  /**
+   * Evict the least recently used file from the cache
+   * @private
+   * @returns {boolean} True if a file was evicted
+   */
+  evictLRU() {
+    if (this.cache.size === 0) {
+      return false;
+    }
+
+    // Find the least recently accessed file
+    let oldestPath = null;
+    let oldestTime = Infinity;
+
+    for (const [filePath, entry] of this.cache.entries()) {
+      if (entry.lastAccessed < oldestTime) {
+        oldestTime = entry.lastAccessed;
+        oldestPath = filePath;
+      }
+    }
+
+    if (oldestPath) {
+      const entry = this.cache.get(oldestPath);
+      this.cache.delete(oldestPath);
+      this.currentCacheSize -= entry.size;
+
+      // Remove from load order
+      const index = this.loadOrder.indexOf(oldestPath);
+      if (index !== -1) {
+        this.loadOrder.splice(index, 1);
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Evict files until there is enough space for the required size
+   * @private
+   * @param {number} requiredSpace - Required space in bytes
+   * @returns {boolean} True if enough space was freed
+   */
+  evictUntilSpace(requiredSpace) {
+    let evictionCount = 0;
+    const maxEvictions = this.cache.size; // Prevent infinite loop
+
+    while (
+      this.currentCacheSize + requiredSpace > this.maxCacheSize &&
+      evictionCount < maxEvictions
+    ) {
+      if (!this.evictLRU()) {
+        // No more files to evict
+        return false;
+      }
+      evictionCount++;
+    }
+
+    // Check if we successfully freed enough space
+    return this.currentCacheSize + requiredSpace <= this.maxCacheSize;
   }
 
   /**
@@ -56,9 +121,11 @@ export class FileLoader {
     // Normalize path for consistent caching
     const normalizedPath = path.normalize(filePath);
 
-    // Return cached if available
+    // Return cached if available (update access time for LRU)
     if (this.cache.has(normalizedPath)) {
-      return this.cache.get(normalizedPath);
+      const cached = this.cache.get(normalizedPath);
+      cached.lastAccessed = Date.now();
+      return cached;
     }
 
     // Validate .ox extension
@@ -85,12 +152,25 @@ export class FileLoader {
 
     // Security: Check aggregate cache size limit
     if (this.currentCacheSize + stats.size > this.maxCacheSize) {
-      throw new Error(
-        `Cache size limit exceeded. Current: ${(this.currentCacheSize / 1024 / 1024).toFixed(2)}MB, ` +
-          `File: ${(stats.size / 1024 / 1024).toFixed(2)}MB, ` +
-          `Limit: ${(this.maxCacheSize / 1024 / 1024).toFixed(1)}MB. ` +
-          `Consider increasing maxCacheSize or clearing cache.`,
-      );
+      // Try to evict old files to make space if eviction is enabled
+      if (this.enableCacheEviction) {
+        const hasSpace = this.evictUntilSpace(stats.size);
+        if (!hasSpace) {
+          throw new Error(
+            `Cannot load file '${normalizedPath}': File too large for cache. ` +
+              `File: ${(stats.size / 1024 / 1024).toFixed(2)}MB, ` +
+              `Cache limit: ${(this.maxCacheSize / 1024 / 1024).toFixed(1)}MB. ` +
+              `Consider increasing maxCacheSize.`,
+          );
+        }
+      } else {
+        throw new Error(
+          `Cache size limit exceeded. Current: ${(this.currentCacheSize / 1024 / 1024).toFixed(2)}MB, ` +
+            `File: ${(stats.size / 1024 / 1024).toFixed(2)}MB, ` +
+            `Limit: ${(this.maxCacheSize / 1024 / 1024).toFixed(1)}MB. ` +
+            `Consider increasing maxCacheSize or clearing cache.`,
+        );
+      }
     }
 
     // Read file content
@@ -120,12 +200,13 @@ export class FileLoader {
       throw new Error(`Parse error in '${normalizedPath}': ${err.message}`);
     }
 
-    // Cache the result with size tracking
+    // Cache the result with size tracking and access time
     const result = {
       ast,
       content,
       filePath: normalizedPath,
       size: contentSize,
+      lastAccessed: Date.now(),
     };
 
     this.cache.set(normalizedPath, result);

@@ -134,10 +134,38 @@ describe("Security - File Size Limits", () => {
     assert.ok(result.content);
   });
 
-  test("blocks aggregate cache size overflow", () => {
+  test("evicts old files when cache is full", () => {
     const loader = new FileLoader(config, {
       maxFileSize: 10 * 1024 * 1024,
       maxCacheSize: 200, // Very small cache
+      enableCacheEviction: true,
+    });
+
+    const file1 = path.join(fixturesDir, "simple.ox");
+    const file2 = path.join(fixturesDir, "tags-library.ox");
+
+    // Load first file
+    loader.loadFile(file1);
+    assert.ok(loader.hasLoaded(file1), "First file should be loaded");
+
+    // Load second file - should evict first file due to cache size limit
+    loader.loadFile(file2);
+    assert.ok(loader.hasLoaded(file2), "Second file should be loaded");
+    assert.ok(!loader.hasLoaded(file1), "First file should be evicted");
+
+    // Verify cache size is within limit
+    const stats = loader.getStats();
+    assert.ok(
+      stats.currentCacheSizeBytes <= 200,
+      "Cache size should be within limit after eviction",
+    );
+  });
+
+  test("blocks cache overflow when eviction is disabled", () => {
+    const loader = new FileLoader(config, {
+      maxFileSize: 10 * 1024 * 1024,
+      maxCacheSize: 200, // Very small cache
+      enableCacheEviction: false,
     });
 
     const file1 = path.join(fixturesDir, "simple.ox");
@@ -146,11 +174,11 @@ describe("Security - File Size Limits", () => {
     // Load first file
     loader.loadFile(file1);
 
-    // Second file should exceed cache limit
+    // Second file should throw because eviction is disabled
     assert.throws(
       () => loader.loadFile(file2),
       /Cache size limit exceeded/,
-      "Should block when aggregate cache size exceeded",
+      "Should throw when eviction is disabled and cache is full",
     );
   });
 

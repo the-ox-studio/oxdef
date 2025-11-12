@@ -90,13 +90,20 @@ export class InjectProcessor {
       const newChildren = [];
 
       for (const child of children) {
-        // Skip non-block children (they might be templates, expressions, etc.)
+        // Skip non-object children
         if (!child || typeof child !== "object") {
           newChildren.push(child);
           continue;
         }
 
-        // Check if child has inline injects
+        // If this child is an inject node, process it and add expanded blocks
+        if (child.type === "Inject") {
+          const expandedBlocks = this.processInject(child, currentFile, config);
+          newChildren.push(...expandedBlocks);
+          continue;
+        }
+
+        // Check if child has inline injects (block-level injects)
         if (
           child.injects &&
           Array.isArray(child.injects) &&

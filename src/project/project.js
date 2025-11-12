@@ -9,6 +9,7 @@
  * - Support macro contexts for preprocessing
  */
 
+import fs from "fs";
 import path from "path";
 import { loadConfig } from "./config.js";
 import { FileLoader } from "./loader.js";
@@ -19,6 +20,62 @@ import { TagRegistry } from "../preprocessor/tags.js";
 import { TemplateExpander } from "../preprocessor/templates.js";
 import { Transaction } from "../transaction/transaction.js";
 import { DataSourceProcessor } from "../preprocessor/datasources.js";
+
+/**
+ * Validate inputs with helpful error messages
+ */
+class InputValidator {
+  static validateDirectory(dir, paramName = "directory") {
+    if (!dir || typeof dir !== "string") {
+      throw new TypeError(
+        `${paramName} must be a non-empty string, got ${typeof dir}`,
+      );
+    }
+
+    if (!fs.existsSync(dir)) {
+      throw new Error(`${paramName} does not exist: ${dir}`);
+    }
+
+    const stats = fs.statSync(dir);
+    if (!stats.isDirectory()) {
+      throw new Error(`${paramName} is not a directory: ${dir}`);
+    }
+  }
+
+  static validateFilePath(filePath, paramName = "filePath") {
+    if (!filePath || typeof filePath !== "string") {
+      throw new TypeError(
+        `${paramName} must be a non-empty string, got ${typeof filePath}`,
+      );
+    }
+
+    if (filePath.length > 4096) {
+      throw new Error(
+        `${paramName} is too long (${filePath.length} chars, max 4096)`,
+      );
+    }
+
+    if (!filePath.endsWith(".ox")) {
+      throw new Error(`${paramName} must have .ox extension: ${filePath}`);
+    }
+  }
+
+  static validateOptions(options, paramName = "options") {
+    if (options !== null && typeof options !== "object") {
+      throw new TypeError(
+        `${paramName} must be an object or null, got ${typeof options}`,
+      );
+    }
+  }
+
+  static validateMacroContext(context, paramName = "macroContext") {
+    if (context !== null && typeof context !== "object") {
+      throw new TypeError(
+        `${paramName} must be an object or null, got ${typeof context}`,
+      );
+    }
+  }
+}
 
 /**
  * OXProject represents a multi-file OX document project
@@ -32,6 +89,9 @@ export class OXProject {
    * @returns {OXProject} Project instance
    */
   static fromDirectory(projectDir, options = {}) {
+    InputValidator.validateDirectory(projectDir, "projectDir");
+    InputValidator.validateOptions(options, "options");
+
     const config = loadConfig(projectDir);
 
     // Apply options overrides
@@ -49,6 +109,13 @@ export class OXProject {
    * @returns {OXProject} Project instance
    */
   static fromFile(filePath, options = {}) {
+    InputValidator.validateFilePath(filePath, "filePath");
+    InputValidator.validateOptions(options, "options");
+
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File does not exist: ${filePath}`);
+    }
+
     const baseDir = path.dirname(filePath);
     const config = {
       baseDir,
@@ -88,8 +155,13 @@ export class OXProject {
    * @returns {Array} Array of evaluated blocks
    */
   parse(macroContext = null) {
+    InputValidator.validateMacroContext(macroContext, "macroContext");
+
     // Determine entry point
-    const entryPoint = path.resolve(this.config.baseDir, this.config.entryPoint);
+    const entryPoint = path.resolve(
+      this.config.baseDir,
+      this.config.entryPoint,
+    );
 
     // Load entry file
     const { ast } = this.loader.loadFile(entryPoint);
@@ -101,7 +173,12 @@ export class OXProject {
     this.injectProcessor.processInjects(ast, entryPoint, this.config);
 
     // Evaluate the main file (preprocess with templates, references, etc.)
-    const blocks = this.evaluateFile(entryPoint, ast, this.config, macroContext);
+    const blocks = this.evaluateFile(
+      entryPoint,
+      ast,
+      this.config,
+      macroContext,
+    );
 
     return blocks;
   }
@@ -114,6 +191,9 @@ export class OXProject {
    * @returns {Array} Array of evaluated blocks
    */
   parseFile(filePath, macroContext = null) {
+    InputValidator.validateFilePath(filePath, "filePath");
+    InputValidator.validateMacroContext(macroContext, "macroContext");
+
     // Load file
     const { ast } = this.loader.loadFile(filePath);
 
