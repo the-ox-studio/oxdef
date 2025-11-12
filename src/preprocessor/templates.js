@@ -1,6 +1,7 @@
 import { PreprocessError } from "../errors/errors.js";
 import { ExpressionEvaluator } from "./expressions.js";
 import { BlockRegistryBuilder, ReferenceResolver } from "./references.js";
+import { MacroWalker } from "../walker/walker.js";
 
 /**
  * TemplateExpander - expands template blocks using transaction data
@@ -444,13 +445,41 @@ export class TemplateExpander {
         // Evaluate property expressions
         this.evaluateBlockProperties(node);
 
-        // MILESTONE 2: Call onWalk hook (properties are literals, children properties still expressions)
+        // MILESTONE 2 & 3: Call onWalk hook (properties are literals, children properties still expressions)
         if (this.macroContext && this.macroContext._hasOnWalk()) {
+          // MILESTONE 3: Set template expander reference for cursor control
+          if (this.macroContext._setTemplateExpander) {
+            this.macroContext._setTemplateExpander(this);
+          }
+
           this.macroContext._executeOnWalk(node, parent);
+
+          // MILESTONE 3: Clear template expander reference after onWalk completes
+          if (this.macroContext._clearTemplateExpander) {
+            this.macroContext._clearTemplateExpander();
+          }
         }
-        // Recursively expand children
+
+        // MILESTONE 3: Auto-process children that weren't manually processed
         if (node.children && node.children.length > 0) {
-          node.children = this.expandNodes(node.children, node);
+          // Process each child if it wasn't manually processed
+          for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+
+            // Check if this child was manually processed during onWalk
+            const wasManuallyProcessed =
+              this.macroContext &&
+              this.macroContext._wasManuallyProcessed &&
+              this.macroContext._wasManuallyProcessed(child);
+
+            if (!wasManuallyProcessed) {
+              // Auto-process this child
+              const processedChildren = this.expandNodes([child], node);
+              if (processedChildren.length > 0) {
+                node.children[i] = processedChildren[0];
+              }
+            }
+          }
         }
         expanded.push(node);
       } else {

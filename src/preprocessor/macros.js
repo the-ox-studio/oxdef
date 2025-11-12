@@ -25,6 +25,12 @@ export class MacroSystem {
 
     // Parser reference (for finish)
     this.parser = null;
+
+    // Cursor control (Milestone 3)
+    this.templateExpander = null;
+    this.manuallyProcessedBlocks = new Set(); // Track blocks manually processed by user
+    this.currentBlock = null; // Current block being processed
+    this.currentParent = null; // Parent of current block
   }
 
   /**
@@ -128,6 +134,10 @@ export class MacroSystem {
     this.shouldFinish = false;
     this.tree = null;
     this.parser = null;
+    this.templateExpander = null;
+    this.manuallyProcessedBlocks.clear();
+    this.currentBlock = null;
+    this.currentParent = null;
   }
 
   /**
@@ -141,6 +151,12 @@ export class MacroSystem {
       return; // No callback, continue normally
     }
 
+    // Set current block context for cursor control (Milestone 3)
+    const previousBlock = this.currentBlock;
+    const previousParent = this.currentParent;
+    this.currentBlock = block;
+    this.currentParent = parent;
+
     try {
       // Call user's onWalk callback
       return this.onWalkCallback(block, parent);
@@ -153,6 +169,10 @@ export class MacroSystem {
         `Error in onWalk callback for block '${block.id || "unknown"}': ${error.message}`,
         error,
       );
+    } finally {
+      // Restore previous block context
+      this.currentBlock = previousBlock;
+      this.currentParent = previousParent;
     }
   }
 
@@ -162,6 +182,172 @@ export class MacroSystem {
    */
   hasOnWalk() {
     return this.onWalkCallback !== null;
+  }
+
+  /**
+   * Set the template expander instance (Milestone 3)
+   * @param {Object} expander - TemplateExpander instance
+   */
+  setTemplateExpander(expander) {
+    this.templateExpander = expander;
+  }
+
+  /**
+   * Peek at next block without advancing cursor (Milestone 3)
+   * For simplicity, this returns the first child if any
+   * @returns {Object|null} Next block or null
+   */
+  nextBlock() {
+    if (!this.currentBlock) {
+      throw new MacroError(
+        "nextBlock() can only be called within onWalk callback",
+      );
+    }
+    // Return first child if exists
+    if (this.currentBlock.children && this.currentBlock.children.length > 0) {
+      return this.currentBlock.children[0];
+    }
+    return null;
+  }
+
+  /**
+   * Peek at next block with parent (Milestone 3)
+   * @returns {{node: Object, parent: Object|null}|null}
+   */
+  peekNext() {
+    if (!this.currentBlock) {
+      throw new MacroError(
+        "peekNext() can only be called within onWalk callback",
+      );
+    }
+    const next = this.nextBlock();
+    if (next) {
+      return { node: next, parent: this.currentBlock };
+    }
+    return null;
+  }
+
+  /**
+   * Get current block with parent (Milestone 3)
+   * @returns {{node: Object, parent: Object|null}|null}
+   */
+  current() {
+    if (!this.currentBlock) {
+      throw new MacroError(
+        "current() can only be called within onWalk callback",
+      );
+    }
+    return {
+      node: this.currentBlock,
+      parent: this.currentParent,
+    };
+  }
+
+  /**
+   * Manually advance to and process a specific block (Milestone 3)
+   * @param {Object} node - Block node to process
+   * @param {Object|null} parent - Parent block
+   */
+  invokeWalk(node, parent) {
+    if (!this.templateExpander) {
+      throw new MacroError(
+        "invokeWalk() can only be called within onWalk callback",
+      );
+    }
+
+    // Mark this block as manually processed
+    this.manuallyProcessedBlocks.add(node);
+
+    // Evaluate the block's properties before calling onWalk
+    this.templateExpander.evaluateBlockProperties(node);
+
+    // Call the user's onWalk callback for this block
+    this.executeOnWalk(node, parent);
+
+    // Auto-process children that weren't manually processed
+    if (node.children && node.children.length > 0) {
+      const childrenToProcess = node.children.filter(
+        (child) => !this.manuallyProcessedBlocks.has(child),
+      );
+
+      if (childrenToProcess.length > 0) {
+        // Process each child
+        for (const child of childrenToProcess) {
+          this.manuallyProcessedBlocks.add(child);
+          this.templateExpander.evaluateBlockProperties(child);
+          this.executeOnWalk(child, node);
+
+          // Recursively process grandchildren
+          if (child.children && child.children.length > 0) {
+            child.children = this.templateExpander.expandNodes(
+              child.children,
+              child,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Move cursor backward (Milestone 3)
+   * Note: Not fully implemented in simple cursor model
+   * @param {number} steps - Number of steps to move back
+   */
+  back(steps = 1) {
+    if (!this.currentBlock) {
+      throw new MacroError("back() can only be called within onWalk callback");
+    }
+    // Simple implementation - no-op for now
+    // Full implementation would require walker integration
+  }
+
+  /**
+   * Get remaining children of a parent block (Milestone 3)
+   * @param {Object} parentNode - Parent block
+   * @returns {Array<{node: Object, parent: Object}>}
+   */
+  getRemainingChildren(parentNode) {
+    if (!this.currentBlock) {
+      throw new MacroError(
+        "getRemainingChildren() can only be called within onWalk callback",
+      );
+    }
+    // Return children that haven't been manually processed
+    if (parentNode.children && parentNode.children.length > 0) {
+      return parentNode.children
+        .filter((child) => !this.manuallyProcessedBlocks.has(child))
+        .map((child) => ({ node: child, parent: parentNode }));
+    }
+    return [];
+  }
+
+  /**
+   * Stop the walk (Milestone 3)
+   * Note: Not fully implemented in simple cursor model
+   */
+  stop() {
+    if (!this.currentBlock) {
+      throw new MacroError("stop() can only be called within onWalk callback");
+    }
+    // Simple implementation - no-op for now
+    // Full implementation would require walker integration
+  }
+
+  /**
+   * Check if a block was manually processed (Milestone 3)
+   * @param {Object} node - Block node
+   * @returns {boolean}
+   */
+  wasManuallyProcessed(node) {
+    return this.manuallyProcessedBlocks.has(node);
+  }
+
+  /**
+   * Clear manually processed blocks tracking (Milestone 3)
+   */
+  clearManuallyProcessedBlocks() {
+    this.manuallyProcessedBlocks.clear();
   }
 }
 
@@ -226,6 +412,63 @@ export function createMacroContext() {
       throwError(message) {
         macros.throwError(message);
       },
+
+      /**
+       * Peek at next block without advancing (Milestone 3)
+       * @returns {Object|null}
+       */
+      nextBlock() {
+        return macros.nextBlock();
+      },
+
+      /**
+       * Peek at next block with parent (Milestone 3)
+       * @returns {{node: Object, parent: Object|null}|null}
+       */
+      peekNext() {
+        return macros.peekNext();
+      },
+
+      /**
+       * Get current block with parent (Milestone 3)
+       * @returns {{node: Object, parent: Object|null}|null}
+       */
+      current() {
+        return macros.current();
+      },
+
+      /**
+       * Manually advance to and process a block (Milestone 3)
+       * @param {Object} node - Block node
+       * @param {Object|null} parent - Parent block
+       */
+      invokeWalk(node, parent) {
+        macros.invokeWalk(node, parent);
+      },
+
+      /**
+       * Move cursor backward (Milestone 3)
+       * @param {number} steps - Number of steps
+       */
+      back(steps = 1) {
+        macros.back(steps);
+      },
+
+      /**
+       * Get remaining children of parent (Milestone 3)
+       * @param {Object} parentNode - Parent block
+       * @returns {Array<{node: Object, parent: Object}>}
+       */
+      getRemainingChildren(parentNode) {
+        return macros.getRemainingChildren(parentNode);
+      },
+
+      /**
+       * Stop the walk (Milestone 3)
+       */
+      stop() {
+        macros.stop();
+      },
     },
 
     /**
@@ -278,6 +521,23 @@ export function createEnhancedMacroContext() {
   // Add internal method for parser integration
   ctx._executeOnParse = function (tree, parser) {
     return macros.executeOnParse(tree, parser);
+  };
+
+  // Add internal methods for template expander integration (Milestone 3)
+  ctx._setTemplateExpander = function (expander) {
+    macros.setTemplateExpander(expander);
+  };
+
+  ctx._clearTemplateExpander = function () {
+    macros.templateExpander = null;
+  };
+
+  ctx._wasManuallyProcessed = function (node) {
+    return macros.wasManuallyProcessed(node);
+  };
+
+  ctx._clearManuallyProcessedBlocks = function () {
+    macros.clearManuallyProcessedBlocks();
   };
 
   return ctx;
