@@ -2,9 +2,10 @@
 
 <set margin = 20>
 <set screenWidth = 1920>
+<set screenHeight = 1080>
 
 // Simple blocks
-[Container (width: (screenWidth), padding: (margin))
+[Container (width: (screenWidth), height: (screenHeight), padding: (margin))
   [Header (height: 60, title: "My App")]
 
   [MainContent (

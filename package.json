@@ -4,6 +4,9 @@
   "description": "OX Language Definition - A powerful data definition language with template preprocessing",
   "main": "src/index.js",
   "type": "module",
+  "bin": {
+    "oxdef": "./bin/oxdef.js"
+  },
   "scripts": {
     "test": "node --test test/**/*.test.js",
     "test:watch": "node --test --watch test/**/*.test.js",
@@ -21,6 +24,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "chokidar": "^4.0.3",
+    "commander": "^14.0.2"
+  }
 }
