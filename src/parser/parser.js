@@ -14,6 +14,7 @@ import {
   createWhile,
   createOnData,
   createImport,
+  createInject,
 } from "./ast.js";
 
 /**
@@ -115,6 +116,9 @@ export class Parser {
         const template = this.parseTemplate();
         if (template.type === "Import") {
           doc.imports.push(template);
+        } else if (template.type === "Inject") {
+          // Keep injects inline with blocks to preserve order
+          doc.blocks.push(template);
         } else {
           doc.templates.push(template);
         }
@@ -160,6 +164,7 @@ export class Parser {
 
     // Parse children (until ])
     const children = [];
+    const injects = [];
     while (!this.check(TokenType.RBRACKET) && !this.isAtEnd()) {
       if (this.check(TokenType.LBRACKET)) {
         children.push(this.parseBlock());
@@ -168,7 +173,12 @@ export class Parser {
         children.push(this.parseBlock());
       } else if (this.check(TokenType.LT)) {
         // Template inside block
-        children.push(this.parseTemplate());
+        const template = this.parseTemplate();
+        if (template.type === "Inject") {
+          injects.push(template);
+        } else {
+          children.push(template);
+        }
       } else {
         this.error(`Unexpected token ${this.current().type} in block body`);
       }
@@ -176,7 +186,9 @@ export class Parser {
 
     this.expect(TokenType.RBRACKET, "Expected ] to close block");
 
-    return createBlock(id, properties, children, tags, location);
+    const block = createBlock(id, properties, children, tags, location);
+    block.injects = injects;
+    return block;
   }
 
   /**
@@ -356,6 +368,8 @@ export class Parser {
         return this.parseOnData(location);
       case "import":
         return this.parseImport(location);
+      case "inject":
+        return this.parseInject(location);
       default:
         this.error(`Unknown template keyword: ${keyword}`);
     }
@@ -710,6 +724,15 @@ export class Parser {
     this.expect(TokenType.GT);
 
     return createImport(path, alias, location);
+  }
+
+  parseInject(location) {
+    const pathToken = this.expect(TokenType.STRING, "Expected inject path");
+    const path = pathToken.value;
+
+    this.expect(TokenType.GT);
+
+    return createInject(path, location);
   }
 }
 
