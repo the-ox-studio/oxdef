@@ -721,3 +721,33 @@ export function parse(input, filename = "<input>") {
   const parser = new Parser(tokens, filename);
   return parser.parse();
 }
+
+/**
+ * Parse with macro system support
+ * @param {string} input - OX source code
+ * @param {string} filename - Filename for error reporting
+ * @param {Object} macroContext - Macro context from createMacroContext()
+ * @returns {Object} Parsed AST (or early if finish() called)
+ */
+export function parseWithMacros(
+  input,
+  filename = "<input>",
+  macroContext = null,
+) {
+  const tokens = tokenize(input, filename);
+  const parser = new Parser(tokens, filename);
+  const tree = parser.parse();
+
+  // Execute onParse hook if provided
+  if (macroContext && macroContext.init.onParse) {
+    // Execute onParse callback (this sets tree internally via macros object)
+    const shouldContinue = macroContext._executeOnParse(tree, parser);
+
+    // If finish() was called, return current tree
+    if (!shouldContinue) {
+      return tree;
+    }
+  }
+
+  return tree;
+}

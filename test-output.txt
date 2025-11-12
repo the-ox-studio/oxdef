@@ -1,0 +1,1976 @@
+
+> oxdefinition@0.1.0 test
+> node --test test/**/*.test.js test/macros-milestone1.test.js
+
+TAP version 13
+# Subtest: Transaction
+    # Subtest: creates transaction with variables
+    ok 1 - creates transaction with variables
+      ---
+      duration_ms: 1.3113
+      ...
+    # Subtest: creates transaction with functions
+    ok 2 - creates transaction with functions
+      ---
+      duration_ms: 1.0933
+      ...
+    # Subtest: adds and retrieves data sources
+    ok 3 - adds and retrieves data sources
+      ---
+      duration_ms: 0.2826
+      ...
+    # Subtest: supports data source wrappers with transaction access
+    ok 4 - supports data source wrappers with transaction access
+      ---
+      duration_ms: 0.2364
+      ...
+    # Subtest: fetches data source successfully
+    ok 5 - fetches data source successfully
+      ---
+      duration_ms: 0.319
+      ...
+    # Subtest: caches data source results
+    ok 6 - caches data source results
+      ---
+      duration_ms: 0.1744
+      ...
+    # Subtest: handles data source timeout
+    ok 7 - handles data source timeout
+      ---
+      duration_ms: 100.8732
+      ...
+    # Subtest: captures data source errors
+    ok 8 - captures data source errors
+      ---
+      duration_ms: 0.3867
+      ...
+    # Subtest: fetches multiple data sources in parallel
+    ok 9 - fetches multiple data sources in parallel
+      ---
+      duration_ms: 10.5818
+      ...
+    # Subtest: handles mixed success and failure in parallel fetch
+    ok 10 - handles mixed success and failure in parallel fetch
+      ---
+      duration_ms: 0.5607
+      ...
+    # Subtest: clones transaction
+    ok 11 - clones transaction
+      ---
+      duration_ms: 0.2186
+      ...
+    # Subtest: clears data source cache
+    ok 12 - clears data source cache
+      ---
+      duration_ms: 0.2753
+      ...
+    1..12
+ok 1 - Transaction
+  ---
+  duration_ms: 118.0657
+  type: 'suite'
+  ...
+# Subtest: DataSourceProcessor
+    # Subtest: detects simple data source in AST
+    ok 1 - detects simple data source in AST
+      ---
+      duration_ms: 1.193
+      ...
+    # Subtest: detects nested data sources
+    ok 2 - detects nested data sources
+      ---
+      duration_ms: 0.2236
+      ...
+    # Subtest: detects parallel data sources
+    ok 3 - detects parallel data sources
+      ---
+      duration_ms: 0.1908
+      ...
+    # Subtest: validates data sources exist in transaction
+    ok 4 - validates data sources exist in transaction
+      ---
+      duration_ms: 0.4899
+      ...
+    # Subtest: creates execution plan for parallel sources
+    ok 5 - creates execution plan for parallel sources
+      ---
+      duration_ms: 0.3172
+      ...
+    # Subtest: creates execution plan for nested sources
+    ok 6 - creates execution plan for nested sources
+      ---
+      duration_ms: 0.1903
+      ...
+    # Subtest: executes data sources according to plan
+    ok 7 - executes data sources according to plan
+      ---
+      duration_ms: 0.3079
+      ...
+    # Subtest: executes nested data sources in order
+    ok 8 - executes nested data sources in order
+      ---
+      duration_ms: 10.887
+      ...
+    # Subtest: tracks successful and failed data sources
+    ok 9 - tracks successful and failed data sources
+      ---
+      duration_ms: 0.4843
+      ...
+    # Subtest: retrieves data source results
+    ok 10 - retrieves data source results
+      ---
+      duration_ms: 0.2295
+      ...
+    # Subtest: retrieves data source errors
+    ok 11 - retrieves data source errors
+      ---
+      duration_ms: 0.3086
+      ...
+    1..11
+ok 2 - DataSourceProcessor
+  ---
+  duration_ms: 15.1055
+  type: 'suite'
+  ...
+# Subtest: ExpressionEvaluator - Literals
+    # Subtest: evaluates number literals
+    ok 1 - evaluates number literals
+      ---
+      duration_ms: 0.9087
+      ...
+    # Subtest: evaluates string literals
+    ok 2 - evaluates string literals
+      ---
+      duration_ms: 0.153
+      ...
+    # Subtest: evaluates boolean literals
+    ok 3 - evaluates boolean literals
+      ---
+      duration_ms: 0.2685
+      ...
+    # Subtest: evaluates null literal
+    ok 4 - evaluates null literal
+      ---
+      duration_ms: 0.1784
+      ...
+    1..4
+ok 3 - ExpressionEvaluator - Literals
+  ---
+  duration_ms: 3.4712
+  type: 'suite'
+  ...
+# Subtest: ExpressionEvaluator - Variables
+    # Subtest: evaluates simple variable reference
+    ok 1 - evaluates simple variable reference
+      ---
+      duration_ms: 0.9503
+      ...
+    # Subtest: evaluates member access
+    ok 2 - evaluates member access
+      ---
+      duration_ms: 0.3082
+      ...
+    # Subtest: evaluates nested member access
+    ok 3 - evaluates nested member access
+      ---
+      duration_ms: 0.4711
+      ...
+    # Subtest: throws on undefined variable
+    ok 4 - throws on undefined variable
+      ---
+      duration_ms: 0.789
+      ...
+    # Subtest: throws on null property access
+    ok 5 - throws on null property access
+      ---
+      duration_ms: 0.3781
+      ...
+    1..5
+ok 4 - ExpressionEvaluator - Variables
+  ---
+  duration_ms: 3.4007
+  type: 'suite'
+  ...
+# Subtest: ExpressionEvaluator - Arithmetic
+    # Subtest: evaluates addition
+    ok 1 - evaluates addition
+      ---
+      duration_ms: 0.455
+      ...
+    # Subtest: evaluates subtraction
+    ok 2 - evaluates subtraction
+      ---
+      duration_ms: 0.1539
+      ...
+    # Subtest: evaluates multiplication
+    ok 3 - evaluates multiplication
+      ---
+      duration_ms: 0.2037
+      ...
+    # Subtest: evaluates division
+    ok 4 - evaluates division
+      ---
+      duration_ms: 0.1544
+      ...
+    # Subtest: evaluates modulo
+    ok 5 - evaluates modulo
+      ---
+      duration_ms: 0.0997
+      ...
+    # Subtest: evaluates exponentiation
+    ok 6 - evaluates exponentiation
+      ---
+      duration_ms: 0.1789
+      ...
+    # Subtest: respects operator precedence
+    ok 7 - respects operator precedence
+      ---
+      duration_ms: 0.1002
+      ...
+    # Subtest: handles parentheses
+    ok 8 - handles parentheses
+      ---
+      duration_ms: 0.0874
+      ...
+    # Subtest: evaluates unary minus
+    ok 9 - evaluates unary minus
+      ---
+      duration_ms: 0.0976
+      ...
+    # Subtest: evaluates complex expression
+    ok 10 - evaluates complex expression
+      ---
+      duration_ms: 0.1067
+      ...
+    1..10
+ok 5 - ExpressionEvaluator - Arithmetic
+  ---
+  duration_ms: 1.8786
+  type: 'suite'
+  ...
+# Subtest: ExpressionEvaluator - Comparison
+    # Subtest: evaluates equality
+    ok 1 - evaluates equality
+      ---
+      duration_ms: 0.2157
+      ...
+    # Subtest: evaluates inequality
+    ok 2 - evaluates inequality
+      ---
+      duration_ms: 0.0882
+      ...
+    # Subtest: evaluates less than
+    ok 3 - evaluates less than
+      ---
+      duration_ms: 0.0937
+      ...
+    # Subtest: evaluates greater than
+    ok 4 - evaluates greater than
+      ---
+      duration_ms: 0.1345
+      ...
+    # Subtest: evaluates less than or equal
+    ok 5 - evaluates less than or equal
+      ---
+      duration_ms: 0.095
+      ...
+    # Subtest: evaluates greater than or equal
+    ok 6 - evaluates greater than or equal
+      ---
+      duration_ms: 0.0887
+      ...
+    1..6
+ok 6 - ExpressionEvaluator - Comparison
+  ---
+  duration_ms: 0.8405
+  type: 'suite'
+  ...
+# Subtest: ExpressionEvaluator - Logical
+    # Subtest: evaluates logical AND
+    ok 1 - evaluates logical AND
+      ---
+      duration_ms: 0.7557
+      ...
+    # Subtest: evaluates logical OR
+    ok 2 - evaluates logical OR
+      ---
+      duration_ms: 0.1178
+      ...
+    # Subtest: evaluates logical NOT
+    ok 3 - evaluates logical NOT
+      ---
+      duration_ms: 0.0928
+      ...
+    # Subtest: evaluates complex logical expression
+    ok 4 - evaluates complex logical expression
+      ---
+      duration_ms: 0.0936
+      ...
+    1..4
+ok 7 - ExpressionEvaluator - Logical
+  ---
+  duration_ms: 1.1618
+  type: 'suite'
+  ...
+# Subtest: ExpressionEvaluator - Mixed Expressions
+    # Subtest: evaluates expression with variables
+    ok 1 - evaluates expression with variables
+      ---
+      duration_ms: 0.1745
+      ...
+    # Subtest: evaluates comparison with variables
+    ok 2 - evaluates comparison with variables
+      ---
+      duration_ms: 0.0862
+      ...
+    # Subtest: evaluates complex condition
+    ok 3 - evaluates complex condition
+      ---
+      duration_ms: 0.0898
+      ...
+    1..3
+ok 8 - ExpressionEvaluator - Mixed Expressions
+  ---
+  duration_ms: 0.4282
+  type: 'suite'
+  ...
+# Subtest: Tokenizer
+    # Subtest: tokenizes simple block
+    ok 1 - tokenizes simple block
+      ---
+      duration_ms: 1.909
+      ...
+    # Subtest: tokenizes block with properties
+    ok 2 - tokenizes block with properties
+      ---
+      duration_ms: 0.5799
+      ...
+    # Subtest: tokenizes strings
+    ok 3 - tokenizes strings
+      ---
+      duration_ms: 0.3822
+      ...
+    # Subtest: tokenizes escape sequences in strings
+    ok 4 - tokenizes escape sequences in strings
+      ---
+      duration_ms: 0.1868
+      ...
+    # Subtest: tokenizes numbers
+    ok 5 - tokenizes numbers
+      ---
+      duration_ms: 0.3386
+      ...
+    # Subtest: tokenizes booleans
+    ok 6 - tokenizes booleans
+      ---
+      duration_ms: 0.1807
+      ...
+    # Subtest: tokenizes null
+    ok 7 - tokenizes null
+      ---
+      duration_ms: 0.1504
+      ...
+    # Subtest: tokenizes arrays
+    ok 8 - tokenizes arrays
+      ---
+      duration_ms: 0.2872
+      ...
+    # Subtest: tokenizes operators
+    ok 9 - tokenizes operators
+      ---
+      duration_ms: 0.4444
+      ...
+    # Subtest: tokenizes references
+    ok 10 - tokenizes references
+      ---
+      duration_ms: 0.4954
+      ...
+    # Subtest: tokenizes tags
+    ok 11 - tokenizes tags
+      ---
+      duration_ms: 1.0067
+      ...
+    # Subtest: tokenizes template markers
+    ok 12 - tokenizes template markers
+      ---
+      duration_ms: 0.1872
+      ...
+    # Subtest: skips line comments
+    ok 13 - skips line comments
+      ---
+      duration_ms: 0.1961
+      ...
+    # Subtest: skips block comments
+    ok 14 - skips block comments
+      ---
+      duration_ms: 0.1817
+      ...
+    # Subtest: tracks line and column numbers
+    ok 15 - tracks line and column numbers
+      ---
+      duration_ms: 0.1169
+      ...
+    # Subtest: throws error on unterminated string
+    ok 16 - throws error on unterminated string
+      ---
+      duration_ms: 0.6154
+      ...
+    # Subtest: throws error on invalid character
+    ok 17 - throws error on invalid character
+      ---
+      duration_ms: 0.1641
+      ...
+    # Subtest: tokenizes complex nested structure
+    ok 18 - tokenizes complex nested structure
+      ---
+      duration_ms: 0.2619
+      ...
+    1..18
+ok 9 - Tokenizer
+  ---
+  duration_ms: 9.9856
+  type: 'suite'
+  ...
+# Subtest: Milestone 1: Pre-Parse Hook - Basic Execution
+    # Subtest: onParse callback executes before preprocessing
+    ok 1 - onParse callback executes before preprocessing
+      ---
+      duration_ms: 2.2263
+      ...
+    # Subtest: onParse callback has access to ctx object
+    ok 2 - onParse callback has access to ctx object
+      ---
+      duration_ms: 0.2118
+      ...
+    1..2
+ok 10 - Milestone 1: Pre-Parse Hook - Basic Execution
+  ---
+  duration_ms: 3.4946
+  type: 'suite'
+  ...
+# Subtest: Milestone 1: Tree Access and Walking
+    # Subtest: ctx.tree provides access to parsed AST
+    ok 1 - ctx.tree provides access to parsed AST
+      ---
+      duration_ms: 0.5735
+      ...
+    # Subtest: ctx.walk() traverses tree structure
+    not ok 2 - ctx.walk() traverses tree structure
+      ---
+      duration_ms: 1.8299
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:85:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+          [
+        +   undefined
+        -   'Root',
+        -   'Child1',
+        -   'GrandChild1',
+        -   'GrandChild2',
+        -   'Child2'
+          ]
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        0: 'Root'
+        1: 'Child1'
+        2: 'GrandChild1'
+        3: 'GrandChild2'
+        4: 'Child2'
+      actual:
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:109:12)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1358:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:677:7)
+      ...
+    # Subtest: ctx.walk() provides parent context
+    not ok 3 - ctx.walk() provides parent context
+      ---
+      duration_ms: 0.6295
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:112:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Root should have no parent
+        + actual - expected
+        
+        + undefined
+        - null
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: ~
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:132:12)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:677:7)
+      ...
+    1..3
+not ok 11 - Milestone 1: Tree Access and Walking
+  ---
+  duration_ms: 3.331
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:61:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Milestone 1: Early Termination
+    # Subtest: ctx.finish() terminates preprocessing early
+    not ok 1 - ctx.finish() terminates preprocessing early
+      ---
+      duration_ms: 0.7816
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:143:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Walk should complete before finish
+        
+        1 !== 3
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 3
+      actual: 1
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:163:12)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Test.start (node:internal/test_runner/test:877:17)
+        node:internal/test_runner/test:1356:71
+        node:internal/per_context/primordials:483:82
+        new Promise (<anonymous>)
+        new SafePromise (node:internal/per_context/primordials:451:29)
+        node:internal/per_context/primordials:483:9
+        Array.map (<anonymous>)
+      ...
+    # Subtest: finish() prevents further processing
+    ok 2 - finish() prevents further processing
+      ---
+      duration_ms: 0.4625
+      ...
+    1..2
+not ok 12 - Milestone 1: Early Termination
+  ---
+  duration_ms: 1.5053
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:142:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Milestone 1: Raw AST Access
+    # Subtest: access raw templates from tree
+    ok 1 - access raw templates from tree
+      ---
+      duration_ms: 0.709
+      ...
+    # Subtest: access raw expressions in properties
+    not ok 2 - access raw expressions in properties
+      ---
+      duration_ms: 0.7084
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:219:3'
+      failureType: 'testCodeFailure'
+      error: "Error in onParse callback: Cannot read properties of undefined (reading 'width')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'MacroError'
+      stack: |-
+        MacroSystem.executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:67:13)
+        ctx._executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:234:19)
+        parseWithMacros (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:744:41)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:236:5)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Promise.all (index 0)
+      ...
+    # Subtest: inspect tags in raw tree
+    not ok 3 - inspect tags in raw tree
+      ---
+      duration_ms: 0.9483
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:242:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Should find 2 tags
+        
+        0 !== 2
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 2
+      actual: 0
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:268:12)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:677:7)
+      ...
+    1..3
+not ok 13 - Milestone 1: Raw AST Access
+  ---
+  duration_ms: 2.6871
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:192:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Milestone 1: Error Handling
+    # Subtest: MacroError is thrown for validation failures
+    ok 1 - MacroError is thrown for validation failures
+      ---
+      duration_ms: 0.7699
+      ...
+    # Subtest: user errors in onParse are caught and wrapped
+    ok 2 - user errors in onParse are caught and wrapped
+      ---
+      duration_ms: 0.2777
+      ...
+    1..2
+ok 14 - Milestone 1: Error Handling
+  ---
+  duration_ms: 1.211
+  type: 'suite'
+  ...
+# Subtest: Milestone 1: Use Cases
+    # Subtest: Use case: Code generation - collect component definitions
+    not ok 1 - Use case: Code generation - collect component definitions
+      ---
+      duration_ms: 0.8884
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:328:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Should find 2 components
+        
+        0 !== 2
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 2
+      actual: 0
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:360:12)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Test.start (node:internal/test_runner/test:877:17)
+        node:internal/test_runner/test:1356:71
+        node:internal/per_context/primordials:483:82
+        new Promise (<anonymous>)
+        new SafePromise (node:internal/per_context/primordials:451:29)
+        node:internal/per_context/primordials:483:9
+        Array.map (<anonymous>)
+      ...
+    # Subtest: Use case: Static analysis - validate block structure
+    not ok 2 - Use case: Static analysis - validate block structure
+      ---
+      duration_ms: 0.4924
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:367:3'
+      failureType: 'testCodeFailure'
+      error: "Error in onParse callback: Cannot read properties of undefined (reading 'some')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'MacroError'
+      stack: |-
+        MacroSystem.executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:67:13)
+        ctx._executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:234:19)
+        parseWithMacros (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:744:41)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:389:5)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Promise.all (index 0)
+      ...
+    # Subtest: Use case: Conditional processing based on analysis
+    ok 3 - Use case: Conditional processing based on analysis
+      ---
+      duration_ms: 0.3143
+      ...
+    1..3
+not ok 15 - Milestone 1: Use Cases
+  ---
+  duration_ms: 1.8831
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:327:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Milestone 1: Integration Tests
+    # Subtest: complex document analysis with multiple features
+    not ok 1 - complex document analysis with multiple features
+      ---
+      duration_ms: 1.3075
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:447:3'
+      failureType: 'testCodeFailure'
+      error: "Error in onParse callback: Cannot read properties of undefined (reading 'forEach')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'MacroError'
+      stack: |-
+        MacroSystem.executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:67:13)
+        ctx._executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:234:19)
+        parseWithMacros (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:744:41)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:498:5)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Test.start (node:internal/test_runner/test:877:17)
+        node:internal/test_runner/test:1356:71
+        node:internal/per_context/primordials:483:82
+        new Promise (<anonymous>)
+      ...
+    # Subtest: parseWithMacros works without macro context
+    ok 2 - parseWithMacros works without macro context
+      ---
+      duration_ms: 0.1672
+      ...
+    # Subtest: parseWithMacros works with empty onParse
+    not ok 3 - parseWithMacros works with empty onParse
+      ---
+      duration_ms: 0.2724
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:517:3'
+      failureType: 'testCodeFailure'
+      error: "Error in onParse callback: Cannot read properties of undefined (reading 'forEach')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'MacroError'
+      stack: |-
+        MacroSystem.executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:67:13)
+        ctx._executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:234:19)
+        parseWithMacros (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:744:41)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:522:18)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:677:7)
+      ...
+    # Subtest: multiple walk calls in onParse
+    not ok 4 - multiple walk calls in onParse
+      ---
+      duration_ms: 0.2276
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:528:3'
+      failureType: 'testCodeFailure'
+      error: "Error in onParse callback: Cannot read properties of undefined (reading 'length')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'MacroError'
+      stack: |-
+        MacroSystem.executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:67:13)
+        ctx._executeOnParse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/preprocessor/macros.js:234:19)
+        parseWithMacros (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:744:41)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/macros-milestone1.test.js:554:5)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:677:7)
+      ...
+    # Subtest: tree structure after onParse remains unchanged
+    ok 5 - tree structure after onParse remains unchanged
+      ---
+      duration_ms: 0.158
+      ...
+    1..5
+not ok 16 - Milestone 1: Integration Tests
+  ---
+  duration_ms: 2.3022
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\macros-milestone1.test.js:446:1'
+  failureType: 'subtestsFailed'
+  error: '3 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Parser
+    # Subtest: parses simple block
+    ok 1 - parses simple block
+      ---
+      duration_ms: 2.8225
+      ...
+    # Subtest: parses block with properties
+    ok 2 - parses block with properties
+      ---
+      duration_ms: 0.9162
+      ...
+    # Subtest: parses block with string properties
+    ok 3 - parses block with string properties
+      ---
+      duration_ms: 0.3736
+      ...
+    # Subtest: parses nested blocks
+    ok 4 - parses nested blocks
+      ---
+      duration_ms: 0.3575
+      ...
+    # Subtest: parses array properties
+    ok 5 - parses array properties
+      ---
+      duration_ms: 1.3758
+      ...
+    # Subtest: parses expression properties
+    ok 6 - parses expression properties
+      ---
+      duration_ms: 0.5923
+      ...
+    # Subtest: parses tags on blocks
+    ok 7 - parses tags on blocks
+      ---
+      duration_ms: 0.4679
+      ...
+    # Subtest: parses tags with arguments
+    ok 8 - parses tags with arguments
+      ---
+      duration_ms: 0.3291
+      ...
+    # Subtest: parses multiple tags
+    ok 9 - parses multiple tags
+      ---
+      duration_ms: 0.437
+      ...
+    # Subtest: parses set template
+    ok 10 - parses set template
+      ---
+      duration_ms: 0.7374
+      ...
+    # Subtest: parses if template
+    ok 11 - parses if template
+      ---
+      duration_ms: 0.577
+      ...
+    # Subtest: parses if-else template
+    ok 12 - parses if-else template
+      ---
+      duration_ms: 0.218
+      ...
+    # Subtest: parses if-elseif-else template
+    ok 13 - parses if-elseif-else template
+      ---
+      duration_ms: 0.2459
+      ...
+    # Subtest: parses foreach template
+    ok 14 - parses foreach template
+      ---
+      duration_ms: 0.3324
+      ...
+    # Subtest: parses foreach with index
+    ok 15 - parses foreach with index
+      ---
+      duration_ms: 0.1829
+      ...
+    # Subtest: parses while template
+    ok 16 - parses while template
+      ---
+      duration_ms: 0.2968
+      ...
+    # Subtest: parses on-data template
+    ok 17 - parses on-data template
+      ---
+      duration_ms: 0.3265
+      ...
+    # Subtest: parses on-data with error handling
+    ok 18 - parses on-data with error handling
+      ---
+      duration_ms: 0.1817
+      ...
+    # Subtest: parses import statement
+    ok 19 - parses import statement
+      ---
+      duration_ms: 0.2306
+      ...
+    # Subtest: parses import with alias
+    ok 20 - parses import with alias
+      ---
+      duration_ms: 0.1989
+      ...
+    # Subtest: parses complex document
+    ok 21 - parses complex document
+      ---
+      duration_ms: 0.7078
+      ...
+    # Subtest: throws error on unclosed block
+    ok 22 - throws error on unclosed block
+      ---
+      duration_ms: 0.6632
+      ...
+    # Subtest: throws error on missing block identifier
+    ok 23 - throws error on missing block identifier
+      ---
+      duration_ms: 0.1491
+      ...
+    # Subtest: throws error on unclosed if
+    ok 24 - throws error on unclosed if
+      ---
+      duration_ms: 0.2112
+      ...
+    # Subtest: throws error on mismatched closing tag
+    ok 25 - throws error on mismatched closing tag
+      ---
+      duration_ms: 0.1612
+      ...
+    1..25
+ok 17 - Parser
+  ---
+  duration_ms: 15.1806
+  type: 'suite'
+  ...
+# Subtest: BlockRegistry
+    # Subtest: should register a block
+    ok 1 - should register a block
+      ---
+      duration_ms: 1.3406
+      ...
+    # Subtest: should track parent-child relationships
+    ok 2 - should track parent-child relationships
+      ---
+      duration_ms: 0.1547
+      ...
+    # Subtest: should build siblings after registration
+    ok 3 - should build siblings after registration
+      ---
+      duration_ms: 0.2634
+      ...
+    # Subtest: should find sibling by ID
+    ok 4 - should find sibling by ID
+      ---
+      duration_ms: 0.3796
+      ...
+    # Subtest: should return null for non-existent sibling
+    ok 5 - should return null for non-existent sibling
+      ---
+      duration_ms: 0.1305
+      ...
+    1..5
+ok 18 - BlockRegistry
+  ---
+  duration_ms: 4.1626
+  type: 'suite'
+  ...
+# Subtest: BlockRegistryBuilder
+    # Subtest: should build registry from simple AST
+    ok 1 - should build registry from simple AST
+      ---
+      duration_ms: 0.242
+      ...
+    # Subtest: should build registry from nested AST
+    ok 2 - should build registry from nested AST
+      ---
+      duration_ms: 0.5976
+      ...
+    # Subtest: should skip Expression properties in Pass 1
+    ok 3 - should skip Expression properties in Pass 1
+      ---
+      duration_ms: 0.2967
+      ...
+    1..3
+ok 19 - BlockRegistryBuilder
+  ---
+  duration_ms: 1.4334
+  type: 'suite'
+  ...
+# Subtest: ReferenceResolver - $this references
+    # Subtest: should resolve $this.property
+    ok 1 - should resolve $this.property
+      ---
+      duration_ms: 1.4024
+      ...
+    # Subtest: should throw error if $this property not found
+    ok 2 - should throw error if $this property not found
+      ---
+      duration_ms: 0.8578
+      ...
+    1..2
+ok 20 - ReferenceResolver - $this references
+  ---
+  duration_ms: 2.5604
+  type: 'suite'
+  ...
+# Subtest: ReferenceResolver - $parent references
+    # Subtest: should resolve $parent.property
+    ok 1 - should resolve $parent.property
+      ---
+      duration_ms: 0.4214
+      ...
+    # Subtest: should resolve $parent.parent chaining
+    ok 2 - should resolve $parent.parent chaining
+      ---
+      duration_ms: 0.3445
+      ...
+    # Subtest: should throw error if $parent used on root block
+    ok 3 - should throw error if $parent used on root block
+      ---
+      duration_ms: 0.2621
+      ...
+    1..3
+ok 21 - ReferenceResolver - $parent references
+  ---
+  duration_ms: 1.2086
+  type: 'suite'
+  ...
+# Subtest: ReferenceResolver - $BlockId references
+    # Subtest: should resolve $BlockId.property for sibling
+    ok 1 - should resolve $BlockId.property for sibling
+      ---
+      duration_ms: 0.3723
+      ...
+    # Subtest: should throw error if sibling block not found
+    ok 2 - should throw error if sibling block not found
+      ---
+      duration_ms: 0.3716
+      ...
+    1..2
+ok 22 - ReferenceResolver - $BlockId references
+  ---
+  duration_ms: 0.873
+  type: 'suite'
+  ...
+# Subtest: ReferenceResolver - Complex expressions
+    # Subtest: should resolve references in arithmetic expressions
+    ok 1 - should resolve references in arithmetic expressions
+      ---
+      duration_ms: 0.3122
+      ...
+    # Subtest: should resolve multiple different reference types in one expression
+    ok 2 - should resolve multiple different reference types in one expression
+      ---
+      duration_ms: 0.4026
+      ...
+    1..2
+ok 23 - ReferenceResolver - Complex expressions
+  ---
+  duration_ms: 0.8332
+  type: 'suite'
+  ...
+# Subtest: ReferenceResolver - Edge cases
+    # Subtest: should throw error for incomplete reference (missing property)
+    ok 1 - should throw error for incomplete reference (missing property)
+      ---
+      duration_ms: 0.3331
+      ...
+    # Subtest: should throw error for invalid reference name
+    ok 2 - should throw error for invalid reference name
+      ---
+      duration_ms: 0.2435
+      ...
+    1..2
+ok 24 - ReferenceResolver - Edge cases
+  ---
+  duration_ms: 0.6896
+  type: 'suite'
+  ...
+# Subtest: Tag Registry
+    # Subtest: defines and retrieves tags
+    ok 1 - defines and retrieves tags
+      ---
+      duration_ms: 1.1501
+      ...
+    # Subtest: prevents duplicate tag definitions
+    ok 2 - prevents duplicate tag definitions
+      ---
+      duration_ms: 0.6251
+      ...
+    # Subtest: registers tag instances
+    ok 3 - registers tag instances
+      ---
+      duration_ms: 0.1748
+      ...
+    # Subtest: prevents duplicate instance registration
+    ok 4 - prevents duplicate instance registration
+      ---
+      duration_ms: 0.3663
+      ...
+    # Subtest: gets instances for tag name
+    ok 5 - gets instances for tag name
+      ---
+      duration_ms: 0.2496
+      ...
+    1..5
+ok 25 - Tag Registry
+  ---
+  duration_ms: 3.4849
+  type: 'suite'
+  ...
+# Subtest: Tag Processor
+    # Subtest: creates instance keys
+    ok 1 - creates instance keys
+      ---
+      duration_ms: 0.3251
+      ...
+    # Subtest: detects tag usage types
+    ok 2 - detects tag usage types
+      ---
+      duration_ms: 0.4328
+      ...
+    # Subtest: throws on mixed tag types
+    ok 3 - throws on mixed tag types
+      ---
+      duration_ms: 0.3555
+      ...
+    # Subtest: validates tag definitions
+    ok 4 - validates tag definitions
+      ---
+      duration_ms: 0.46
+      ...
+    # Subtest: throws on undefined tag
+    ok 5 - throws on undefined tag
+      ---
+      duration_ms: 0.4286
+      ...
+    # Subtest: throws on tag definition with expression
+    ok 6 - throws on tag definition with expression
+      ---
+      duration_ms: 0.2582
+      ...
+    # Subtest: throws on composition with properties
+    ok 7 - throws on composition with properties
+      ---
+      duration_ms: 0.2606
+      ...
+    # Subtest: throws on composition with children
+    ok 8 - throws on composition with children
+      ---
+      duration_ms: 0.1695
+      ...
+    # Subtest: processes tag definitions
+    ok 9 - processes tag definitions
+      ---
+      duration_ms: 2.1182
+      ...
+    # Subtest: keeps tag definitions when canOutput is true
+    ok 10 - keeps tag definitions when canOutput is true
+      ---
+      duration_ms: 0.3042
+      ...
+    # Subtest: validates instances reference existing definitions
+    ok 11 - validates instances reference existing definitions
+      ---
+      duration_ms: 0.622
+      ...
+    1..11
+ok 26 - Tag Processor
+  ---
+  duration_ms: 6.3287
+  type: 'suite'
+  ...
+# Subtest: Tag Expansion
+    # Subtest: expands single tag instance
+    ok 1 - expands single tag instance
+      ---
+      duration_ms: 1.0186
+      ...
+    # Subtest: expands tag instance with inherited children
+    ok 2 - expands tag instance with inherited children
+      ---
+      duration_ms: 0.8699
+      ...
+    # Subtest: expands tag composition
+    ok 3 - expands tag composition
+      ---
+      duration_ms: 0.6376
+      ...
+    # Subtest: expands nested tag instances
+    ok 4 - expands nested tag instances
+      ---
+      duration_ms: 0.4085
+      ...
+    # Subtest: clones blocks independently
+    ok 5 - clones blocks independently
+      ---
+      duration_ms: 0.3805
+      ...
+    1..5
+ok 27 - Tag Expansion
+  ---
+  duration_ms: 4.1614
+  type: 'suite'
+  ...
+# Subtest: Module Property Injection
+    # Subtest: injects module properties from tag definition
+    ok 1 - injects module properties from tag definition
+      ---
+      duration_ms: 0.4104
+      ...
+    # Subtest: throws on module property conflict
+    ok 2 - throws on module property conflict
+      ---
+      duration_ms: 0.2123
+      ...
+    # Subtest: injects module properties with various types
+    ok 3 - injects module properties with various types
+      ---
+      duration_ms: 0.5663
+      ...
+    # Subtest: injects module properties into nested blocks
+    ok 4 - injects module properties into nested blocks
+      ---
+      duration_ms: 0.3544
+      ...
+    # Subtest: handles multiple tags with different module properties
+    ok 5 - handles multiple tags with different module properties
+      ---
+      duration_ms: 0.1882
+      ...
+    # Subtest: module properties are called fresh each time
+    ok 6 - module properties are called fresh each time
+      ---
+      duration_ms: 0.1635
+      ...
+    # Subtest: handles empty module definition
+    ok 7 - handles empty module definition
+      ---
+      duration_ms: 0.1006
+      ...
+    # Subtest: handles blocks without tags
+    ok 8 - handles blocks without tags
+      ---
+      duration_ms: 0.0958
+      ...
+    # Subtest: module getters receive context with tag information
+    ok 9 - module getters receive context with tag information
+      ---
+      duration_ms: 0.2159
+      ...
+    # Subtest: module getters support backward compatibility (no context)
+    ok 10 - module getters support backward compatibility (no context)
+      ---
+      duration_ms: 0.1353
+      ...
+    1..10
+ok 28 - Module Property Injection
+  ---
+  duration_ms: 2.6622
+  type: 'suite'
+  ...
+# Subtest: Critical Fixes
+    # Subtest: deep clone prevents shared nested object references
+    ok 1 - deep clone prevents shared nested object references
+      ---
+      duration_ms: 0.4324
+      ...
+    # Subtest: deep clone handles nested arrays recursively
+    ok 2 - deep clone handles nested arrays recursively
+      ---
+      duration_ms: 0.1724
+      ...
+    # Subtest: detects circular tag dependencies in direct recursion
+    ok 3 - detects circular tag dependencies in direct recursion
+      ---
+      duration_ms: 0.2255
+      ...
+    # Subtest: detects circular tag dependencies in indirect recursion
+    ok 4 - detects circular tag dependencies in indirect recursion
+      ---
+      duration_ms: 0.1648
+      ...
+    # Subtest: allows non-circular recursive structures
+    ok 5 - allows non-circular recursive structures
+      ---
+      duration_ms: 0.249
+      ...
+    1..5
+ok 29 - Critical Fixes
+  ---
+  duration_ms: 1.4027
+  type: 'suite'
+  ...
+# Subtest: Template Expansion - <set>
+    # Subtest: sets variable with literal value
+    ok 1 - sets variable with literal value
+      ---
+      duration_ms: 2.8838
+      ...
+    # Subtest: sets variable with expression
+    ok 2 - sets variable with expression
+      ---
+      duration_ms: 0.9022
+      ...
+    # Subtest: set template produces no blocks
+    ok 3 - set template produces no blocks
+      ---
+      duration_ms: 0.2538
+      ...
+    # Subtest: sets multiple variables in sequence
+    ok 4 - sets multiple variables in sequence
+      ---
+      duration_ms: 0.3273
+      ...
+    1..4
+ok 30 - Template Expansion - <set>
+  ---
+  duration_ms: 5.4665
+  type: 'suite'
+  ...
+# Subtest: Template Expansion - <if>
+    # Subtest: expands then block when condition is true
+    ok 1 - expands then block when condition is true
+      ---
+      duration_ms: 0.6174
+      ...
+    # Subtest: does not expand then block when condition is false
+    ok 2 - does not expand then block when condition is false
+      ---
+      duration_ms: 0.1643
+      ...
+    # Subtest: expands else block when condition is false
+    ok 3 - expands else block when condition is false
+      ---
+      duration_ms: 0.4143
+      ...
+    # Subtest: expands elseif block when condition matches
+    ok 4 - expands elseif block when condition matches
+      ---
+      duration_ms: 0.8488
+      ...
+    # Subtest: evaluates first matching elseif only
+    ok 5 - evaluates first matching elseif only
+      ---
+      duration_ms: 0.9043
+      ...
+    # Subtest: handles complex conditions
+    ok 6 - handles complex conditions
+      ---
+      duration_ms: 0.6158
+      ...
+    # Subtest: expands multiple blocks in branch
+    ok 7 - expands multiple blocks in branch
+      ---
+      duration_ms: 0.3869
+      ...
+    1..7
+ok 31 - Template Expansion - <if>
+  ---
+  duration_ms: 4.5131
+  type: 'suite'
+  ...
+# Subtest: Template Expansion - <foreach>
+    # Subtest: expands blocks for each item in array
+    ok 1 - expands blocks for each item in array
+      ---
+      duration_ms: 0.8597
+      ...
+    # Subtest: makes item available as variable
+    ok 2 - makes item available as variable
+      ---
+      duration_ms: 0.4693
+      ...
+    # Subtest: provides index variable when specified
+    ok 3 - provides index variable when specified
+      ---
+      duration_ms: 0.1999
+      ...
+    # Subtest: handles empty array
+    ok 4 - handles empty array
+      ---
+      duration_ms: 0.266
+      ...
+    # Subtest: cleans up item variable after loop
+    ok 5 - cleans up item variable after loop
+      ---
+      duration_ms: 0.1268
+      ...
+    # Subtest: restores previous item variable value
+    ok 6 - restores previous item variable value
+      ---
+      duration_ms: 0.3004
+      ...
+    # Subtest: throws on non-array collection
+    ok 7 - throws on non-array collection
+      ---
+      duration_ms: 0.7889
+      ...
+    1..7
+ok 32 - Template Expansion - <foreach>
+  ---
+  duration_ms: 3.7557
+  type: 'suite'
+  ...
+# Subtest: Template Expansion - <while>
+    # Subtest: expands blocks while condition is true
+    not ok 1 - expands blocks while condition is true
+      ---
+      duration_ms: 0.5235
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:392:3'
+      failureType: 'testCodeFailure'
+      error: 'Expected SLASH but got IDENTIFIER'
+      code: 'ERR_TEST_FAILURE'
+      name: 'ParseError'
+      stack: |-
+        Parser.error (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:96:11)
+        Parser.expect (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:87:10)
+        Parser.parseWhile (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:610:10)
+        Parser.parseTemplate (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:354:21)
+        Parser.parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:115:31)
+        parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:722:17)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/template-expansion.test.js:406:17)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Test.start (node:internal/test_runner/test:877:17)
+      ...
+    # Subtest: does not expand when condition is initially false
+    ok 2 - does not expand when condition is initially false
+      ---
+      duration_ms: 0.3633
+      ...
+    # Subtest: prevents infinite loops with max iterations
+    ok 3 - prevents infinite loops with max iterations
+      ---
+      duration_ms: 25.5955
+      ...
+    # Subtest: handles complex loop with variable updates
+    not ok 4 - handles complex loop with variable updates
+      ---
+      duration_ms: 0.2911
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:453:3'
+      failureType: 'testCodeFailure'
+      error: 'Expected SLASH but got IDENTIFIER'
+      code: 'ERR_TEST_FAILURE'
+      name: 'ParseError'
+      stack: |-
+        Parser.error (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:96:11)
+        Parser.expect (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:87:10)
+        Parser.parseWhile (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:610:10)
+        Parser.parseTemplate (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:354:21)
+        Parser.parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:115:31)
+        parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:722:17)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/template-expansion.test.js:469:17)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+      ...
+    1..4
+not ok 33 - Template Expansion - <while>
+  ---
+  duration_ms: 27.104
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:391:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Template Expansion - Nested Templates
+    # Subtest: handles nested if templates
+    ok 1 - handles nested if templates
+      ---
+      duration_ms: 0.6255
+      ...
+    # Subtest: handles foreach inside if
+    ok 2 - handles foreach inside if
+      ---
+      duration_ms: 0.3237
+      ...
+    # Subtest: handles if inside foreach
+    not ok 3 - handles if inside foreach
+      ---
+      duration_ms: 0.2331
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:528:3'
+      failureType: 'testCodeFailure'
+      error: 'Expected SLASH but got IDENTIFIER'
+      code: 'ERR_TEST_FAILURE'
+      name: 'ParseError'
+      stack: |-
+        Parser.error (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:96:11)
+        Parser.expect (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:87:10)
+        Parser.parseForeach (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:578:10)
+        Parser.parseTemplate (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:352:21)
+        Parser.parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:115:31)
+        parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:722:17)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/template-expansion.test.js:545:17)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+      ...
+    # Subtest: handles set inside foreach
+    not ok 4 - handles set inside foreach
+      ---
+      duration_ms: 0.2158
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:556:3'
+      failureType: 'testCodeFailure'
+      error: 'Expected SLASH but got IDENTIFIER'
+      code: 'ERR_TEST_FAILURE'
+      name: 'ParseError'
+      stack: |-
+        Parser.error (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:96:11)
+        Parser.expect (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:87:10)
+        Parser.parseForeach (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:578:10)
+        Parser.parseTemplate (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:352:21)
+        Parser.parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:115:31)
+        parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:722:17)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/template-expansion.test.js:570:17)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+      ...
+    1..4
+not ok 34 - Template Expansion - Nested Templates
+  ---
+  duration_ms: 1.6474
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:478:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Template Expansion - Integration
+    # Subtest: expands complex template combination
+    not ok 1 - expands complex template combination
+      ---
+      duration_ms: 0.5824
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:581:3'
+      failureType: 'testCodeFailure'
+      error: 'Expected SLASH but got IDENTIFIER'
+      code: 'ERR_TEST_FAILURE'
+      name: 'ParseError'
+      stack: |-
+        Parser.error (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:96:11)
+        Parser.expect (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:87:10)
+        Parser.parseForeach (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:578:10)
+        Parser.parseTemplate (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:352:21)
+        Parser.parseBlock (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:171:28)
+        Parser.parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:125:30)
+        parse (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/src/parser/parser.js:722:17)
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/template-expansion.test.js:610:17)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+      ...
+    1..1
+not ok 35 - Template Expansion - Integration
+  ---
+  duration_ms: 0.6695
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\template-expansion.test.js:580:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: TemplateExpander - OnData
+    # Subtest: expands on-data block with successful fetch
+    ok 1 - expands on-data block with successful fetch
+      ---
+      duration_ms: 4.7774
+      ...
+    # Subtest: expands on-error block with failed fetch
+    ok 2 - expands on-error block with failed fetch
+      ---
+      duration_ms: 0.7139
+      ...
+    # Subtest: makes data source result available as variable
+    ok 3 - makes data source result available as variable
+      ---
+      duration_ms: 0.6222
+      ...
+    # Subtest: makes error available as $error variable
+    ok 4 - makes error available as $error variable
+      ---
+      duration_ms: 0.5973
+      ...
+    # Subtest: handles nested on-data blocks
+    ok 5 - handles nested on-data blocks
+      ---
+      duration_ms: 0.7681
+      ...
+    # Subtest: handles multiple parallel on-data blocks
+    ok 6 - handles multiple parallel on-data blocks
+      ---
+      duration_ms: 0.4207
+      ...
+    # Subtest: handles mixed success and error blocks
+    ok 7 - handles mixed success and error blocks
+      ---
+      duration_ms: 0.9178
+      ...
+    # Subtest: preserves block children when expanding
+    ok 8 - preserves block children when expanding
+      ---
+      duration_ms: 0.7129
+      ...
+    # Subtest: handles empty data source results
+    ok 9 - handles empty data source results
+      ---
+      duration_ms: 0.7363
+      ...
+    # Subtest: cleans up variables after expansion
+    ok 10 - cleans up variables after expansion
+      ---
+      duration_ms: 0.7825
+      ...
+    # Subtest: cleans up $error variable after expansion
+    ok 11 - cleans up $error variable after expansion
+      ---
+      duration_ms: 0.4529
+      ...
+    # Subtest: handles on-data with no error block when fetch fails
+    ok 12 - handles on-data with no error block when fetch fails
+      ---
+      duration_ms: 0.3479
+      ...
+    # Subtest: expands multiple levels of nesting
+    ok 13 - expands multiple levels of nesting
+      ---
+      duration_ms: 1.1443
+      ...
+    1..13
+ok 36 - TemplateExpander - OnData
+  ---
+  duration_ms: 15.5632
+  type: 'suite'
+  ...
+# Subtest: Two-Pass Integration - $parent references
+    # Subtest: should resolve $parent.property in nested blocks
+    ok 1 - should resolve $parent.property in nested blocks
+      ---
+      duration_ms: 2.838
+      ...
+    # Subtest: should resolve $parent.parent chaining
+    ok 2 - should resolve $parent.parent chaining
+      ---
+      duration_ms: 0.6333
+      ...
+    # Subtest: should resolve $parent in arithmetic expressions
+    ok 3 - should resolve $parent in arithmetic expressions
+      ---
+      duration_ms: 0.6279
+      ...
+    1..3
+ok 37 - Two-Pass Integration - $parent references
+  ---
+  duration_ms: 5.1543
+  type: 'suite'
+  ...
+# Subtest: Two-Pass Integration - $this references
+    # Subtest: should resolve $this.property
+    ok 1 - should resolve $this.property
+      ---
+      duration_ms: 0.3062
+      ...
+    1..1
+ok 38 - Two-Pass Integration - $this references
+  ---
+  duration_ms: 0.4
+  type: 'suite'
+  ...
+# Subtest: Two-Pass Integration - $BlockId references
+    # Subtest: should resolve sibling block references
+    ok 1 - should resolve sibling block references
+      ---
+      duration_ms: 0.4317
+      ...
+    # Subtest: should resolve forward references (sibling defined later)
+    ok 2 - should resolve forward references (sibling defined later)
+      ---
+      duration_ms: 0.289
+      ...
+    1..2
+ok 39 - Two-Pass Integration - $BlockId references
+  ---
+  duration_ms: 0.9984
+  type: 'suite'
+  ...
+# Subtest: Two-Pass Integration - Complex scenarios
+    # Subtest: should handle mixed reference types in one expression
+    ok 1 - should handle mixed reference types in one expression
+      ---
+      duration_ms: 0.4412
+      ...
+    # Subtest: should handle references with conditional templates
+    not ok 2 - should handle references with conditional templates
+      ---
+      duration_ms: 1.6483
+      location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\two-pass-integration.test.js:166:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        undefined !== 'Box'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'Box'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Dev/Desinda.Dev/Tools/OX%20Studio/oxdef/test/two-pass-integration.test.js:187:12)
+        Test.runInAsyncScope (node:async_hooks:211:14)
+        Test.run (node:internal/test_runner/test:979:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:677:18)
+        Test.postRun (node:internal/test_runner/test:1090:19)
+        Test.run (node:internal/test_runner/test:1018:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1358:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:677:7)
+      ...
+    # Subtest: should resolve references without breaking non-reference expressions
+    ok 3 - should resolve references without breaking non-reference expressions
+      ---
+      duration_ms: 0.9382
+      ...
+    1..3
+not ok 40 - Two-Pass Integration - Complex scenarios
+  ---
+  duration_ms: 3.4555
+  type: 'suite'
+  location: 'C:\\Dev\\Desinda.Dev\\Tools\\OX Studio\\oxdef\\test\\two-pass-integration.test.js:143:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Two-Pass Integration - Error handling
+    # Subtest: should throw error for $parent on root block
+    ok 1 - should throw error for $parent on root block
+      ---
+      duration_ms: 0.9452
+      ...
+    # Subtest: should throw error for undefined sibling reference
+    ok 2 - should throw error for undefined sibling reference
+      ---
+      duration_ms: 0.3816
+      ...
+    # Subtest: should throw error for undefined property reference
+    ok 3 - should throw error for undefined property reference
+      ---
+      duration_ms: 0.9829
+      ...
+    1..3
+ok 41 - Two-Pass Integration - Error handling
+  ---
+  duration_ms: 2.4348
+  type: 'suite'
+  ...
+# Subtest: TreeWalker - Depth-First Traversal
+    # Subtest: pre-order traversal visits parent before children
+    ok 1 - pre-order traversal visits parent before children
+      ---
+      duration_ms: 1.7382
+      ...
+    # Subtest: post-order traversal visits children before parent
+    ok 2 - post-order traversal visits children before parent
+      ---
+      duration_ms: 0.2715
+      ...
+    # Subtest: pre-order traversal provides correct parent references
+    ok 3 - pre-order traversal provides correct parent references
+      ---
+      duration_ms: 0.3464
+      ...
+    # Subtest: TreeWalker tracks parent chain correctly
+    ok 4 - TreeWalker tracks parent chain correctly
+      ---
+      duration_ms: 0.2351
+      ...
+    # Subtest: depth-first traversal handles single node tree
+    ok 5 - depth-first traversal handles single node tree
+      ---
+      duration_ms: 0.2876
+      ...
+    1..5
+ok 42 - TreeWalker - Depth-First Traversal
+  ---
+  duration_ms: 4.8302
+  type: 'suite'
+  ...
+# Subtest: TreeWalker - Breadth-First Traversal
+    # Subtest: breadth-first traversal visits level by level
+    ok 1 - breadth-first traversal visits level by level
+      ---
+      duration_ms: 0.3651
+      ...
+    # Subtest: breadth-first traversal provides correct parent references
+    ok 2 - breadth-first traversal provides correct parent references
+      ---
+      duration_ms: 0.3653
+      ...
+    1..2
+ok 43 - TreeWalker - Breadth-First Traversal
+  ---
+  duration_ms: 1.0345
+  type: 'suite'
+  ...
+# Subtest: TreeWalker - Control Flow
+    # Subtest: WalkerControl.STOP terminates traversal early
+    ok 1 - WalkerControl.STOP terminates traversal early
+      ---
+      duration_ms: 0.2419
+      ...
+    # Subtest: WalkerControl.SKIP skips children of current node
+    ok 2 - WalkerControl.SKIP skips children of current node
+      ---
+      duration_ms: 0.3224
+      ...
+    1..2
+ok 44 - TreeWalker - Control Flow
+  ---
+  duration_ms: 0.8011
+  type: 'suite'
+  ...
+# Subtest: TreeWalker - Filtering
+    # Subtest: filter option excludes non-matching nodes
+    ok 1 - filter option excludes non-matching nodes
+      ---
+      duration_ms: 0.2842
+      ...
+    # Subtest: filter can use parent context for filtering
+    ok 2 - filter can use parent context for filtering
+      ---
+      duration_ms: 0.1357
+      ...
+    1..2
+ok 45 - TreeWalker - Filtering
+  ---
+  duration_ms: 0.4991
+  type: 'suite'
+  ...
+# Subtest: Utility Functions
+    # Subtest: findNode returns first matching node
+    ok 1 - findNode returns first matching node
+      ---
+      duration_ms: 0.1992
+      ...
+    # Subtest: findNode returns null if no match found
+    ok 2 - findNode returns null if no match found
+      ---
+      duration_ms: 0.0831
+      ...
+    # Subtest: findAllNodes returns all matching nodes
+    ok 3 - findAllNodes returns all matching nodes
+      ---
+      duration_ms: 0.1127
+      ...
+    # Subtest: findByTag finds nodes with specific tag
+    ok 4 - findByTag finds nodes with specific tag
+      ---
+      duration_ms: 0.1708
+      ...
+    # Subtest: findByProperty finds nodes with specific property
+    ok 5 - findByProperty finds nodes with specific property
+      ---
+      duration_ms: 0.1248
+      ...
+    # Subtest: findByProperty can match property value
+    ok 6 - findByProperty can match property value
+      ---
+      duration_ms: 0.1306
+      ...
+    1..6
+ok 46 - Utility Functions
+  ---
+  duration_ms: 0.9499
+  type: 'suite'
+  ...
+# Subtest: MacroWalker - Cursor Control
+    # Subtest: nextBlock peeks at next node without advancing
+    ok 1 - nextBlock peeks at next node without advancing
+      ---
+      duration_ms: 0.2807
+      ...
+    # Subtest: invokeWalk allows jumping to specific block
+    ok 2 - invokeWalk allows jumping to specific block
+      ---
+      duration_ms: 0.2763
+      ...
+    # Subtest: back moves cursor backward
+    ok 3 - back moves cursor backward
+      ---
+      duration_ms: 0.2296
+      ...
+    # Subtest: getRemainingChildren returns children of specific parent
+    ok 4 - getRemainingChildren returns children of specific parent
+      ---
+      duration_ms: 0.1513
+      ...
+    # Subtest: current returns current block with parent
+    ok 5 - current returns current block with parent
+      ---
+      duration_ms: 0.1009
+      ...
+    1..5
+ok 47 - MacroWalker - Cursor Control
+  ---
+  duration_ms: 1.1752
+  type: 'suite'
+  ...
+# Subtest: MacroWalker - Auto-processing
+    # Subtest: MacroWalker processes all blocks in flattened order
+    ok 1 - MacroWalker processes all blocks in flattened order
+      ---
+      duration_ms: 0.1247
+      ...
+    # Subtest: MacroWalker stop method halts traversal
+    ok 2 - MacroWalker stop method halts traversal
+      ---
+      duration_ms: 0.1115
+      ...
+    1..2
+ok 48 - MacroWalker - Auto-processing
+  ---
+  duration_ms: 0.31
+  type: 'suite'
+  ...
+# Subtest: Edge Cases and Integration
+    # Subtest: getAncestors returns correct ancestor chain
+    ok 1 - getAncestors returns correct ancestor chain
+      ---
+      duration_ms: 0.2071
+      ...
+    # Subtest: getAncestors returns empty array for root node
+    ok 2 - getAncestors returns empty array for root node
+      ---
+      duration_ms: 0.0718
+      ...
+    # Subtest: walk handles empty children array
+    ok 3 - walk handles empty children array
+      ---
+      duration_ms: 0.1034
+      ...
+    # Subtest: walk handles null tree gracefully
+    ok 4 - walk handles null tree gracefully
+      ---
+      duration_ms: 0.5253
+      ...
+    # Subtest: filter with SKIP control works correctly
+    ok 5 - filter with SKIP control works correctly
+      ---
+      duration_ms: 0.1823
+      ...
+    # Subtest: MacroWalker peekNext returns null at end
+    ok 6 - MacroWalker peekNext returns null at end
+      ---
+      duration_ms: 0.0948
+      ...
+    # Subtest: complex tree traversal with mixed controls
+    ok 7 - complex tree traversal with mixed controls
+      ---
+      duration_ms: 0.1167
+      ...
+    1..7
+ok 49 - Edge Cases and Integration
+  ---
+  duration_ms: 1.451
+  type: 'suite'
+  ...
+1..49
+# tests 256
+# suites 49
+# pass 240
+# fail 16
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 404.6892

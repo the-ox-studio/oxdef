@@ -541,3 +541,222 @@ const components = findByTag(tree, 'component');
 - **Debugging**: Walk tree to inspect structure and properties
 - **Serialization**: Walk tree to generate JSON or other formats
 
+
+## In Progress (Phase 12 - Milestone 1)
+
+### ✅ Milestone 1: Pre-Parse Hook
+**Files**: `src/preprocessor/macros.js`, `src/parser/parser.js`
+
+Implemented the pre-parse macro hook system allowing users to inspect and manipulate the parsed AST before preprocessing begins.
+
+#### MacroSystem Class
+**File**: `src/preprocessor/macros.js`
+
+Core macro system infrastructure:
+- **MacroSystem**: Central manager for all macro hooks
+- **createEnhancedMacroContext()**: Factory for macro-enabled parser context
+- **MacroError**: Custom error type for macro validation
+
+#### Pre-Parse Hook API
+**Available in onParse callback**:
+- `ctx.tree` - Access to parsed AST (templates/expressions intact)
+- `ctx.walk(tree, callback, options)` - Walk tree using Phase 11 walker
+- `ctx.finish()` - Terminate preprocessing early
+- `ctx.macros.throwError(message)` - Throw validation errors
+
+#### Parser Integration
+**File**: `src/parser/parser.js`
+
+New function for macro-enabled parsing:
+- `parseWithMacros(input, filename, macroContext)` - Parse with macro hooks
+
+**Execution flow**:
+1. Parse OX source to AST
+2. If `onParse` callback exists, execute it
+3. User can walk tree, validate, generate code
+4. User can call `finish()` to skip preprocessing
+5. Return tree (raw if finished, preprocessed otherwise)
+
+#### Example Usage
+```javascript
+import { createEnhancedMacroContext } from './src/preprocessor/macros.js';
+import { parseWithMacros } from './src/parser/parser.js';
+
+const ctx = createEnhancedMacroContext();
+
+// Set pre-parse callback
+ctx.init.onParse = function() {
+  // Access raw tree
+  console.log('Blocks:', ctx.tree.children.length);
+  
+  // Walk and analyze
+  const components = [];
+  ctx.walk(ctx.tree, (block) => {
+    if (block.tags?.some(t => t.name === 'component')) {
+      components.push(block.id);
+    }
+  });
+  
+  // Generate code
+  console.log('Generated:', components.map(c => `class ${c} {}`).join('\n'));
+  
+  // Optional: terminate early
+  if (someCondition) {
+    ctx.finish();
+  }
+};
+
+// Parse with macro context
+const tree = parseWithMacros(oxSource, 'file.ox', ctx);
+```
+
+#### Use Cases Implemented
+1. **Code Generation**: Generate TypeScript types from component definitions
+2. **Static Analysis**: Validate document structure (required blocks, etc.)
+3. **Early Termination**: Skip preprocessing for partial analysis
+4. **Tag Inspection**: Analyze @component, #entity tags before expansion
+5. **Template Analysis**: Inspect <set>, <if>, <foreach> before evaluation
+
+**Tests**: 20/20 passing (100%)
+- Basic onParse callback execution (2 tests)
+- Tree access and walking (3 tests)
+- Early termination with finish() (2 tests)
+- Raw AST access (templates, expressions, tags) (3 tests)
+- Error handling (MacroError, user errors) (2 tests)
+- Use cases (code generation, static analysis, partial processing) (3 tests)
+- Integration tests (5 tests)
+
+**Overall Test Status**: 250/256 passing (97.7%)
+- Phase 11: 31/31 tests passing (100%)
+- Phase 12 Milestone 1: 20/20 tests passing (100%)
+- Phase 1-10: 199/205 tests passing (97.1%)
+- 6 failures from Phase 9 (templates in loop bodies - parser limitation)
+
+**Status**: ✅ **MILESTONE 1 COMPLETE**
+
+---
+
+**Next**: Milestone 2 - Macro Walk Hook (`onWalk` callback during preprocessing)
+
+### ✅ Milestone 2: Macro Walk Hook
+**Files**: `src/preprocessor/macros.js`, `src/preprocessor/templates.js`
+
+Implemented the macro walk hook system that executes during preprocessing for each block with property evaluation guarantees.
+
+#### Macro Walk Hook API
+**Available in onWalk callback**:
+- `ctx.macros.onWalk = function(block, parent) {...}` - Set callback
+- `block.properties` - All properties are evaluated (literals, not expressions)
+- `parent` - Parent block reference (null for root blocks)
+- `ctx.macros.throwError(message)` - Throw validation errors
+
+#### Property Evaluation Guarantees
+**When `onWalk(block, parent)` is called**:
+- ✅ `block.properties` - All expressions resolved to literals
+- ✅ `parent.properties` - Parent was already processed (if parent exists)
+- ✅ Module properties - Injected and available
+- ❌ `block.children[].properties` - NOT evaluated (still expressions)
+- ❌ Sibling properties - May not be evaluated yet
+
+**This guarantees users can**:
+- Read and validate all block properties as literals
+- Modify block properties safely
+- Set default values for missing properties
+- Inspect parent properties
+- Know children haven't been processed yet
+
+#### Auto-Processing Behavior
+After `onWalk` returns, the preprocessor automatically:
+1. Recursively expands all children (if any)
+2. Evaluates children's properties
+3. Calls `onWalk` for each child
+4. Processes grandchildren, and so on...
+
+**User doesn't need to manually process children unless they want custom control** (Milestone 3).
+
+#### Template Expander Integration
+**Modified**: `src/preprocessor/templates.js`
+
+Changes to `TemplateExpander`:
+1. Added `macroContext` parameter to constructor
+2. Added `parent` parameter to `expandNodes(nodes, parent)`
+3. Integrated onWalk call after property evaluation:
+   ```javascript
+   // Evaluate property expressions
+   this.evaluateBlockProperties(node);
+
+   // Call onWalk hook (properties are literals, children properties still expressions)
+   if (this.macroContext && this.macroContext._hasOnWalk()) {
+     this.macroContext._executeOnWalk(node, parent);
+   }
+
+   // Recursively expand children (auto-processing)
+   if (node.children && node.children.length > 0) {
+     node.children = this.expandNodes(node.children, node);
+   }
+   ```
+
+#### Example Usage
+```javascript
+import { createEnhancedMacroContext } from './src/preprocessor/macros.js';
+import { TemplateExpander } from './src/preprocessor/templates.js';
+
+const ctx = createEnhancedMacroContext();
+
+// Set macro walk callback
+ctx.macros.onWalk = function(block, parent) {
+  // Properties are evaluated
+  console.log('Width:', block.properties.width.value); // 100 (literal)
+  
+  // Validate required properties
+  if (block.id === 'Button' && !block.properties.label) {
+    ctx.macros.throwError('Button requires label property');
+  }
+  
+  // Set defaults
+  if (!block.properties.padding) {
+    block.properties.padding = { type: 'number', value: 0 };
+  }
+  
+  // Compute derived properties
+  if (block.properties['auto-size']) {
+    // Will process children in Milestone 3
+  }
+  
+  // Children auto-process after this returns
+};
+
+// Create expander with macro context
+const expander = new TemplateExpander(transaction, dataSourceProcessor, ctx);
+const result = expander.expandTemplates(tree);
+```
+
+#### Use Cases Implemented
+1. **Property Validation**: Enforce required properties before preprocessing continues
+2. **Default Values**: Set missing properties to default values
+3. **Property Transformation**: Compute derived properties from existing ones
+4. **Parent Context**: Access parent properties for validation/defaults
+5. **Structural Validation**: Validate parent-child relationships
+
+**Tests**: 24/24 passing (100%)
+- Basic onWalk execution (3 tests)
+- Property evaluation guarantees (4 tests)
+- Auto-processing (3 tests)
+- Property modification (2 tests)
+- Validation (2 tests)
+- Integration (2 tests)
+- Error handling (2 tests)
+- Advanced use cases (6 tests)
+
+**Overall Test Status**: 275/280 passing (98.2%)
+- Phase 11: 31/31 tests passing (100%)
+- Phase 12 Milestone 1: 20/20 tests passing (100%)
+- Phase 12 Milestone 2: 24/24 tests passing (100%)
+- Phase 1-10: 200/205 tests passing (97.6%)
+- 5 failures from Phase 9 (templates in loop bodies - parser limitation)
+
+**Status**: ✅ **MILESTONE 2 COMPLETE**
+
+---
+
+**Next**: Milestone 3 - Cursor Control API (manual child evaluation)

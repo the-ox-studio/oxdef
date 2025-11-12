@@ -6,11 +6,10 @@ import { BlockRegistryBuilder, ReferenceResolver } from "./references.js";
  * TemplateExpander - expands template blocks using transaction data
  */
 export class TemplateExpander {
-  constructor(transaction, dataSourceProcessor, macroContext = null) {
+  constructor(transaction, dataSourceProcessor) {
     this.transaction = transaction;
     this.dataSourceProcessor = dataSourceProcessor;
     this.expressionEvaluator = new ExpressionEvaluator(transaction);
-    this.macroContext = macroContext;
   }
 
   /**
@@ -38,10 +37,9 @@ export class TemplateExpander {
       }
     }
 
-    // Also process regular blocks (through expandNodes to trigger onWalk)
+    // Also process regular blocks
     if (document.blocks && document.blocks.length > 0) {
-      const processedBlocks = this.expandNodes(document.blocks, null);
-      expandedBlocks.push(...processedBlocks);
+      expandedBlocks.push(...document.blocks);
     }
 
     // Two-Pass Resolution System
@@ -104,7 +102,7 @@ export class TemplateExpander {
 
       try {
         // Expand the data blocks with the data in scope
-        const expandedBlocks = this.expandNodes(onDataNode.dataBlocks, null);
+        const expandedBlocks = this.expandNodes(onDataNode.dataBlocks);
 
         // Restore previous value
         if (previousValue !== undefined) {
@@ -136,7 +134,7 @@ export class TemplateExpander {
 
       try {
         // Expand the error blocks with $error in scope
-        const expandedBlocks = this.expandNodes(onDataNode.errorBlocks, null);
+        const expandedBlocks = this.expandNodes(onDataNode.errorBlocks);
 
         // Restore previous error value
         if (previousError !== undefined) {
@@ -189,7 +187,7 @@ export class TemplateExpander {
 
     if (this.expressionEvaluator.toBoolean(condition)) {
       // Condition is true, expand the then blocks
-      return this.expandNodes(ifNode.thenBlocks, null);
+      return this.expandNodes(ifNode.thenBlocks);
     }
 
     // Check elseif branches
@@ -199,14 +197,14 @@ export class TemplateExpander {
           branch.condition,
         );
         if (this.expressionEvaluator.toBoolean(elseifCondition)) {
-          return this.expandNodes(branch.blocks, null);
+          return this.expandNodes(branch.blocks);
         }
       }
     }
 
     // All conditions false, expand else blocks if present
     if (ifNode.elseBlocks && ifNode.elseBlocks.length > 0) {
-      return this.expandNodes(ifNode.elseBlocks, null);
+      return this.expandNodes(ifNode.elseBlocks);
     }
 
     // No matching branch, return empty array
@@ -262,7 +260,7 @@ export class TemplateExpander {
         const clonedBody = this.cloneNodes(foreachNode.body);
 
         // Expand blocks with current item in scope
-        const iterationBlocks = this.expandNodes(clonedBody, null);
+        const iterationBlocks = this.expandNodes(clonedBody);
         expandedBlocks.push(...iterationBlocks);
       }
 
@@ -332,7 +330,7 @@ export class TemplateExpander {
       const clonedBody = this.cloneNodes(whileNode.body);
 
       // Expand blocks with condition true
-      const iterationBlocks = this.expandNodes(clonedBody, null);
+      const iterationBlocks = this.expandNodes(clonedBody);
       expandedBlocks.push(...iterationBlocks);
 
       iterations++;
@@ -427,7 +425,7 @@ export class TemplateExpander {
   /**
    * Expand an array of nodes (recursively)
    */
-  expandNodes(nodes, parent = null) {
+  expandNodes(nodes) {
     const expanded = [];
 
     for (const node of nodes) {
@@ -444,13 +442,9 @@ export class TemplateExpander {
         // Evaluate property expressions
         this.evaluateBlockProperties(node);
 
-        // MILESTONE 2: Call onWalk hook (properties are literals, children properties still expressions)
-        if (this.macroContext && this.macroContext._hasOnWalk()) {
-          this.macroContext._executeOnWalk(node, parent);
-        }
         // Recursively expand children
         if (node.children && node.children.length > 0) {
-          node.children = this.expandNodes(node.children, node);
+          node.children = this.expandNodes(node.children);
         }
         expanded.push(node);
       } else {
