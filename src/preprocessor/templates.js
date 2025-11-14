@@ -453,6 +453,9 @@ export class TemplateExpander {
           node.children = this.expandNodes(node.children, node);
         }
         expanded.push(node);
+      } else if (node.type === "FreeText") {
+        // Free text nodes pass through unchanged
+        expanded.push(node);
       } else {
         // Other template types
         const result = this.expandTemplate(node);

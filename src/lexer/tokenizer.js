@@ -53,6 +53,10 @@ export const TokenType = {
   NEWLINE: "NEWLINE",
   EOF: "EOF",
   COMMENT: "COMMENT",
+
+  // Free text blocks
+  BACKTICK: "BACKTICK", // ` (for counting backticks)
+  FREE_TEXT_CONTENT: "FREE_TEXT_CONTENT",
 };
 
 /**
@@ -246,6 +250,106 @@ export class Tokenizer {
   }
 
   /**
+   * Read free text block (triple backticks or more)
+   * Returns token with delimiter count and raw content
+   */
+  readFreeTextBlock() {
+    const startLine = this.line;
+    const startColumn = this.column;
+
+    // Count opening backticks (but we need to check for immediate closing)
+    let totalBackticks = 0;
+    while (!this.isAtEnd() && this.current() === "`") {
+      totalBackticks++;
+      this.advance();
+    }
+
+    // Need at least 3 backticks total
+    if (totalBackticks < 3) {
+      throw this.error(
+        `Free text blocks require at least 3 backticks, found ${totalBackticks}`,
+      );
+    }
+
+    // For an even number of backticks with no content in between,
+    // split them in half (opening and closing)
+    let delimiterCount;
+
+    // Special case: if we have exactly 6 or more EVEN backticks and the next
+    // character is NOT a backtick, this is likely an empty block like ``````
+    if (
+      totalBackticks >= 6 &&
+      totalBackticks % 2 === 0 &&
+      (this.isAtEnd() || this.current() !== "`")
+    ) {
+      delimiterCount = totalBackticks / 2;
+      // Rewind to the middle point
+      this.pos -= delimiterCount;
+      this.column -= delimiterCount;
+    } else if (this.isAtEnd() || this.current() !== "`") {
+      // Content follows (or EOF with odd/less than 6 backticks)
+      delimiterCount = totalBackticks;
+    } else {
+      // More backticks follow - could be empty block or content with backticks
+      // For even numbers, assume empty block
+      if (totalBackticks % 2 === 0) {
+        delimiterCount = totalBackticks / 2;
+        // "Unread" the second half by moving position back
+        this.pos -= delimiterCount;
+        this.column -= delimiterCount;
+      } else {
+        // Odd number - use all as opening
+        delimiterCount = totalBackticks;
+      }
+    }
+
+    // Consume content until we find closing delimiter
+    let content = "";
+    let foundClosing = false;
+
+    while (!this.isAtEnd()) {
+      // Check for potential closing delimiter
+      if (this.current() === "`") {
+        // Count consecutive backticks
+        const checkPos = this.pos;
+        const checkLine = this.line;
+        const checkColumn = this.column;
+        let closingCount = 0;
+
+        while (!this.isAtEnd() && this.current() === "`") {
+          closingCount++;
+          this.advance();
+        }
+
+        // If we found matching delimiter count, we're done
+        if (closingCount === delimiterCount) {
+          foundClosing = true;
+          break;
+        } else {
+          // Not a match, add the backticks to content and continue
+          content += "`".repeat(closingCount);
+        }
+      } else {
+        content += this.advance();
+      }
+    }
+
+    if (!foundClosing) {
+      throw this.error(
+        `Unterminated free text block starting at ${startLine}:${startColumn} (expected ${delimiterCount} backticks)`,
+      );
+    }
+
+    return new Token(
+      TokenType.FREE_TEXT_CONTENT,
+      content,
+      startLine,
+      startColumn,
+      "`".repeat(delimiterCount) + content + "`".repeat(delimiterCount),
+    );
+  }
+
+  /**
    * Read string (quoted)
    */
   readString() {
@@ -330,6 +434,25 @@ export class Tokenizer {
     if (char === "/" && this.peek() === "*") {
       this.skipBlockComment();
       return this.nextToken(); // Skip comment and get next token
+    }
+
+    // Free text blocks (triple backticks)
+    if (char === "`") {
+      // Check if it's triple backticks or more
+      let backtickCount = 0;
+      let tempPos = this.pos;
+      while (tempPos < this.input.length && this.input[tempPos] === "`") {
+        backtickCount++;
+        tempPos++;
+      }
+
+      if (backtickCount >= 3) {
+        return this.readFreeTextBlock();
+      }
+      // Single or double backtick - treat as unexpected character
+      throw this.error(
+        `Unexpected backtick character (free text blocks require at least 3 backticks)`,
+      );
     }
 
     // Strings

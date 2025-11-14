@@ -265,6 +265,87 @@ Expressions **must** be wrapped in parentheses within property values.
 
 **Why?** Prevents ambiguity and makes expressions explicit.
 
+### Free Text Blocks
+
+Free text blocks provide a native way to express prose, documentation, and unstructured text content using triple-backtick syntax (familiar from Markdown).
+
+```ox
+[Document
+  ```
+  This is a paragraph with free text content.
+  It can span multiple lines and preserves whitespace.
+  ```
+]
+```
+
+**Key Features:**
+
+1. **Whitespace Processing** - Uses Python's `textwrap.dedent()` algorithm:
+   - Leading/trailing newlines are trimmed
+   - Common indentation is removed from all lines
+   - Intentional relative indentation is preserved
+
+2. **Tag Support** - Free text blocks can have tag instances for semantic meaning:
+
+```ox
+[Article
+  #markdown
+  ```
+  ## Heading
+  
+  Some **bold** text.
+  ```
+  
+  #code(lang: "python")
+  ```
+  def factorial(n):
+      return 1 if n <= 1 else n * factorial(n - 1)
+  ```
+]
+```
+
+3. **Block Merging** - Adjacent free text blocks with identical tags (or no tags) merge automatically:
+
+```ox
+[Content
+  ```
+  First paragraph.
+  ```
+  
+  ```
+  Second paragraph.
+  ```
+]
+// Merges to: "First paragraph.\n\nSecond paragraph."
+```
+
+Blocks with different tags remain separate. Configure with `mergeFreeText: false` to disable.
+
+4. **Escaping** - Use four or more backticks to include triple backticks in content:
+
+```ox
+[Example
+  ````
+  Here's markdown with a code block:
+  ```
+  code here
+  ```
+  ````
+]
+```
+
+**Important:** Free text blocks are only allowed as children of blocks, not in properties.
+
+```ox
+// ✓ Correct - Free text as child
+[Document
+  ```Hello```
+]
+
+// ✗ Wrong - Free text not allowed in properties
+[Block (prop: ```text```)]
+```
+
 ### Tag Syntax
 
 ```ox

@@ -14,16 +14,22 @@ import {
   createWhile,
   createOnData,
   createImport,
+  createFreeText,
 } from "./ast.js";
+import { processFreeText } from "../preprocessor/whitespace.js";
 
 /**
  * Recursive descent parser for OX language
  */
 export class Parser {
-  constructor(tokens, filename = "<input>") {
+  constructor(tokens, filename = "<input>", options = {}) {
     this.tokens = tokens;
     this.filename = filename;
     this.pos = 0;
+    this.options = {
+      mergeFreeText: true, // Default: merge adjacent free text blocks with identical tags
+      ...options,
+    };
   }
 
   /**
@@ -164,8 +170,59 @@ export class Parser {
       if (this.check(TokenType.LBRACKET)) {
         children.push(this.parseBlock());
       } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
-        // Tags inside block (followed by another block)
-        children.push(this.parseBlock());
+        // Check if tags are followed by free text or another block
+        const tagsPeek = [];
+        let peekPos = this.pos;
+
+        // Collect all consecutive tags
+        while (
+          peekPos < this.tokens.length &&
+          (this.tokens[peekPos].type === TokenType.AT ||
+            this.tokens[peekPos].type === TokenType.HASH)
+        ) {
+          peekPos++;
+          // Skip tag name
+          if (
+            peekPos < this.tokens.length &&
+            this.tokens[peekPos].type === TokenType.IDENTIFIER
+          ) {
+            peekPos++;
+          }
+          // Skip optional argument
+          if (
+            peekPos < this.tokens.length &&
+            this.tokens[peekPos].type === TokenType.LPAREN
+          ) {
+            peekPos++;
+            if (
+              peekPos < this.tokens.length &&
+              this.tokens[peekPos].type === TokenType.IDENTIFIER
+            ) {
+              peekPos++;
+            }
+            if (
+              peekPos < this.tokens.length &&
+              this.tokens[peekPos].type === TokenType.RPAREN
+            ) {
+              peekPos++;
+            }
+          }
+        }
+
+        // Check what follows the tags
+        if (
+          peekPos < this.tokens.length &&
+          this.tokens[peekPos].type === TokenType.FREE_TEXT_CONTENT
+        ) {
+          // Tags followed by free text
+          children.push(this.parseFreeText());
+        } else {
+          // Tags followed by block
+          children.push(this.parseBlock());
+        }
+      } else if (this.check(TokenType.FREE_TEXT_CONTENT)) {
+        // Free text without tags
+        children.push(this.parseFreeText());
       } else if (this.check(TokenType.LT)) {
         // Template inside block
         children.push(this.parseTemplate());
@@ -176,7 +233,10 @@ export class Parser {
 
     this.expect(TokenType.RBRACKET, "Expected ] to close block");
 
-    return createBlock(id, properties, children, tags, location);
+    // Merge adjacent free text blocks with identical tags (if enabled)
+    const mergedChildren = this.mergeFreeTextBlocks(children);
+
+    return createBlock(id, properties, mergedChildren, tags, location);
   }
 
   /**
@@ -203,6 +263,191 @@ export class Parser {
     }
 
     return createTag(tagType, name, argument, location);
+  }
+
+  /**
+   * Parse free text block: ```content```
+   * Optionally preceded by tags: #tag ```content```
+   */
+  parseFreeText() {
+    // Parse any tags that precede the free text
+    const tags = [];
+    while (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+      tags.push(this.parseTag());
+    }
+
+    // Expect free text content
+    const token = this.expect(
+      TokenType.FREE_TEXT_CONTENT,
+      "Expected free text content",
+    );
+    const location = this.getLocation(token);
+    const rawText = token.value;
+
+    // Process whitespace using dedent algorithm
+    const processedText = processFreeText(rawText, tags);
+
+    return createFreeText(processedText, tags, location);
+  }
+
+  /**
+   * Helper method to parse a child element (block, free text, or template)
+   * Used in parseBlock and template methods (if, foreach, etc.)
+   */
+  parseChild() {
+    if (this.check(TokenType.LBRACKET)) {
+      return this.parseBlock();
+    } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
+      // Check if tags are followed by free text or another block
+      let peekPos = this.pos;
+
+      // Collect all consecutive tags
+      while (
+        peekPos < this.tokens.length &&
+        (this.tokens[peekPos].type === TokenType.AT ||
+          this.tokens[peekPos].type === TokenType.HASH)
+      ) {
+        peekPos++;
+        // Skip tag name
+        if (
+          peekPos < this.tokens.length &&
+          this.tokens[peekPos].type === TokenType.IDENTIFIER
+        ) {
+          peekPos++;
+        }
+        // Skip optional argument
+        if (
+          peekPos < this.tokens.length &&
+          this.tokens[peekPos].type === TokenType.LPAREN
+        ) {
+          peekPos++;
+          if (
+            peekPos < this.tokens.length &&
+            this.tokens[peekPos].type === TokenType.IDENTIFIER
+          ) {
+            peekPos++;
+          }
+          if (
+            peekPos < this.tokens.length &&
+            this.tokens[peekPos].type === TokenType.RPAREN
+          ) {
+            peekPos++;
+          }
+        }
+      }
+
+      // Check what follows the tags
+      if (
+        peekPos < this.tokens.length &&
+        this.tokens[peekPos].type === TokenType.FREE_TEXT_CONTENT
+      ) {
+        return this.parseFreeText();
+      } else {
+        return this.parseBlock();
+      }
+    } else if (this.check(TokenType.FREE_TEXT_CONTENT)) {
+      return this.parseFreeText();
+    } else if (this.check(TokenType.LT)) {
+      return this.parseTemplate();
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Merge adjacent free text blocks with identical tags
+   * @param {Array} children - Array of child nodes
+   * @returns {Array} - Array with merged free text blocks
+   */
+  mergeFreeTextBlocks(children) {
+    // If merging is disabled, return children as-is
+    if (!this.options.mergeFreeText) {
+      return children;
+    }
+
+    const merged = [];
+    let i = 0;
+
+    while (i < children.length) {
+      const current = children[i];
+
+      // If not a free text node, just add it and continue
+      if (current.type !== "FreeText") {
+        merged.push(current);
+        i++;
+        continue;
+      }
+
+      // Start collecting adjacent free text blocks with identical tags
+      const blocksToMerge = [current];
+      let j = i + 1;
+
+      while (j < children.length && children[j].type === "FreeText") {
+        const next = children[j];
+
+        // Check if tags are identical
+        if (this.tagsAreEqual(current.tags, next.tags)) {
+          blocksToMerge.push(next);
+          j++;
+        } else {
+          break;
+        }
+      }
+
+      // If we found multiple blocks to merge, merge them
+      if (blocksToMerge.length > 1) {
+        const mergedText = blocksToMerge
+          .map((block) => block.value)
+          .join("\n\n");
+        const mergedNode = createFreeText(
+          mergedText,
+          current.tags,
+          current.location,
+        );
+        merged.push(mergedNode);
+      } else {
+        // Just one block, add it as-is
+        merged.push(current);
+      }
+
+      i = j;
+    }
+
+    return merged;
+  }
+
+  /**
+   * Check if two tag arrays are equal
+   * @param {Array} tags1 - First tag array
+   * @param {Array} tags2 - Second tag array
+   * @returns {boolean} - True if tags are equal
+   */
+  tagsAreEqual(tags1, tags2) {
+    // Both empty or undefined - equal
+    if ((!tags1 || tags1.length === 0) && (!tags2 || tags2.length === 0)) {
+      return true;
+    }
+
+    // Different lengths - not equal
+    if (!tags1 || !tags2 || tags1.length !== tags2.length) {
+      return false;
+    }
+
+    // Compare each tag
+    for (let i = 0; i < tags1.length; i++) {
+      const tag1 = tags1[i];
+      const tag2 = tags2[i];
+
+      if (
+        tag1.tagType !== tag2.tagType ||
+        tag1.name !== tag2.name ||
+        tag1.argument !== tag2.argument
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -390,28 +635,22 @@ export class Parser {
     // Parse then blocks
     const thenBlocks = [];
     while (!this.isAtEnd()) {
+      // Check if we've hit a closing tag or else/elseif
       if (this.check(TokenType.LT)) {
-        // Check if it's a closing tag or else/elseif
         const peekKeyword = this.peek(1);
         if (peekKeyword && peekKeyword.type === TokenType.IDENTIFIER) {
-          if (
-            peekKeyword.value === "else" ||
-            peekKeyword.value === "elseif" ||
-            (peekKeyword.value === "if" &&
-              this.peek(0).type === TokenType.SLASH)
-          ) {
+          if (peekKeyword.value === "else" || peekKeyword.value === "elseif") {
             break;
           }
         }
-        if (this.peek(1) && this.peek(1).type === TokenType.SLASH) {
+        if (peekKeyword && peekKeyword.type === TokenType.SLASH) {
           break;
         }
-        // It's a nested template
-        thenBlocks.push(this.parseTemplate());
-      } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
-        thenBlocks.push(this.parseBlock());
-      } else if (this.check(TokenType.LBRACKET)) {
-        thenBlocks.push(this.parseBlock());
+      }
+
+      const child = this.parseChild();
+      if (child) {
+        thenBlocks.push(child);
       } else {
         break;
       }
@@ -432,26 +671,25 @@ export class Parser {
 
           const elseIfBody = [];
           while (!this.isAtEnd()) {
+            // Check if we've hit a closing tag or else/elseif
             if (this.check(TokenType.LT)) {
               const peekKeyword = this.peek(1);
               if (peekKeyword && peekKeyword.type === TokenType.IDENTIFIER) {
                 if (
                   peekKeyword.value === "else" ||
-                  peekKeyword.value === "elseif" ||
-                  (peekKeyword.value === "if" &&
-                    this.peek(0).type === TokenType.SLASH)
+                  peekKeyword.value === "elseif"
                 ) {
                   break;
                 }
               }
-              if (this.peek(1) && this.peek(1).type === TokenType.SLASH) {
+              if (peekKeyword && peekKeyword.type === TokenType.SLASH) {
                 break;
               }
-              elseIfBody.push(this.parseTemplate());
-            } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
-              elseIfBody.push(this.parseBlock());
-            } else if (this.check(TokenType.LBRACKET)) {
-              elseIfBody.push(this.parseBlock());
+            }
+
+            const child = this.parseChild();
+            if (child) {
+              elseIfBody.push(child);
             } else {
               break;
             }
@@ -467,24 +705,17 @@ export class Parser {
           this.expect(TokenType.GT);
 
           while (!this.isAtEnd()) {
+            // Check if we've hit the closing </if> tag
             if (this.check(TokenType.LT)) {
               const peekKeyword = this.peek(1);
               if (peekKeyword && peekKeyword.type === TokenType.SLASH) {
                 break;
               }
-              if (
-                peekKeyword &&
-                peekKeyword.type === TokenType.IDENTIFIER &&
-                peekKeyword.value === "if" &&
-                this.peek(0).type === TokenType.SLASH
-              ) {
-                break;
-              }
-              elseBlocks.push(this.parseTemplate());
-            } else if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
-              elseBlocks.push(this.parseBlock());
-            } else if (this.check(TokenType.LBRACKET)) {
-              elseBlocks.push(this.parseBlock());
+            }
+
+            const child = this.parseChild();
+            if (child) {
+              elseBlocks.push(child);
             } else {
               break;
             }
@@ -560,14 +791,18 @@ export class Parser {
 
     // Parse body
     const body = [];
-    while (!this.check(TokenType.LT) && !this.isAtEnd()) {
-      if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
-        // Tags followed by block
-        body.push(this.parseBlock());
-      } else if (this.check(TokenType.LBRACKET)) {
-        body.push(this.parseBlock());
-      } else if (this.check(TokenType.LT)) {
-        body.push(this.parseTemplate());
+    while (!this.isAtEnd()) {
+      // Check if we've hit the closing tag
+      if (this.check(TokenType.LT)) {
+        const peekSlash = this.peek(1);
+        if (peekSlash && peekSlash.type === TokenType.SLASH) {
+          break; // Found </foreach>
+        }
+      }
+
+      const child = this.parseChild();
+      if (child) {
+        body.push(child);
       } else {
         break;
       }
@@ -593,13 +828,18 @@ export class Parser {
     this.expect(TokenType.GT);
 
     const body = [];
-    while (!this.check(TokenType.LT) && !this.isAtEnd()) {
-      if (this.check(TokenType.AT) || this.check(TokenType.HASH)) {
-        body.push(this.parseBlock());
-      } else if (this.check(TokenType.LBRACKET)) {
-        body.push(this.parseBlock());
-      } else if (this.check(TokenType.LT)) {
-        body.push(this.parseTemplate());
+    while (!this.isAtEnd()) {
+      // Check if we've hit the closing tag
+      if (this.check(TokenType.LT)) {
+        const peekSlash = this.peek(1);
+        if (peekSlash && peekSlash.type === TokenType.SLASH) {
+          break; // Found </while>
+        }
+      }
+
+      const child = this.parseChild();
+      if (child) {
+        body.push(child);
       } else {
         break;
       }

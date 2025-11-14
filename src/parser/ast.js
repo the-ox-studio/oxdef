@@ -18,7 +18,7 @@ export class ASTNode {
  */
 export class BlockNode extends ASTNode {
   constructor(id, properties = {}, children = [], tags = [], location = null) {
-    super('Block', location);
+    super("Block", location);
     this.id = id;
     this.properties = properties;
     this.children = children;
@@ -32,7 +32,7 @@ export class BlockNode extends ASTNode {
  */
 export class TagNode extends ASTNode {
   constructor(type, name, argument = null, location = null) {
-    super('Tag', location);
+    super("Tag", location);
     this.tagType = type; // 'definition' (@) or 'instance' (#)
     this.name = name;
     this.argument = argument;
@@ -45,7 +45,7 @@ export class TagNode extends ASTNode {
  */
 export class PropertyNode extends ASTNode {
   constructor(key, value, location = null) {
-    super('Property', location);
+    super("Property", location);
     this.key = key;
     this.value = value; // Can be literal or ExpressionNode
   }
@@ -56,7 +56,7 @@ export class PropertyNode extends ASTNode {
  */
 export class LiteralNode extends ASTNode {
   constructor(valueType, value, location = null) {
-    super('Literal', location);
+    super("Literal", location);
     this.valueType = valueType; // 'string', 'number', 'boolean', 'null'
     this.value = value;
   }
@@ -68,7 +68,7 @@ export class LiteralNode extends ASTNode {
  */
 export class ArrayNode extends ASTNode {
   constructor(elements, location = null) {
-    super('Array', location);
+    super("Array", location);
     this.elements = elements; // Array of LiteralNode or ExpressionNode
   }
 }
@@ -79,7 +79,7 @@ export class ArrayNode extends ASTNode {
  */
 export class ExpressionNode extends ASTNode {
   constructor(tokens, location = null) {
-    super('Expression', location);
+    super("Expression", location);
     this.tokens = tokens; // Raw tokens for later parsing
     this.resolved = false;
     this.value = null;
@@ -96,7 +96,7 @@ export class ExpressionNode extends ASTNode {
  */
 export class SetNode extends ASTNode {
   constructor(name, value, location = null) {
-    super('Set', location);
+    super("Set", location);
     this.name = name;
     this.value = value; // Can be literal or ExpressionNode
   }
@@ -107,8 +107,14 @@ export class SetNode extends ASTNode {
  * Represents: <if (condition)>...</if>
  */
 export class IfNode extends ASTNode {
-  constructor(condition, thenBlocks, elseIfBranches = [], elseBlocks = [], location = null) {
-    super('If', location);
+  constructor(
+    condition,
+    thenBlocks,
+    elseIfBranches = [],
+    elseBlocks = [],
+    location = null,
+  ) {
+    super("If", location);
     this.condition = condition; // ExpressionNode
     this.thenBlocks = thenBlocks;
     this.elseIfBranches = elseIfBranches; // Array of {condition, blocks}
@@ -122,7 +128,7 @@ export class IfNode extends ASTNode {
  */
 export class ForeachNode extends ASTNode {
   constructor(itemVar, indexVar, collection, body, location = null) {
-    super('Foreach', location);
+    super("Foreach", location);
     this.itemVar = itemVar;
     this.indexVar = indexVar; // null if not specified
     this.collection = collection; // Variable name or expression
@@ -136,7 +142,7 @@ export class ForeachNode extends ASTNode {
  */
 export class WhileNode extends ASTNode {
   constructor(condition, body, location = null) {
-    super('While', location);
+    super("While", location);
     this.condition = condition; // ExpressionNode
     this.body = body;
   }
@@ -148,7 +154,7 @@ export class WhileNode extends ASTNode {
  */
 export class OnDataNode extends ASTNode {
   constructor(sourceName, dataBlocks, errorBlocks = [], location = null) {
-    super('OnData', location);
+    super("OnData", location);
     this.sourceName = sourceName;
     this.dataBlocks = dataBlocks;
     this.errorBlocks = errorBlocks;
@@ -161,9 +167,21 @@ export class OnDataNode extends ASTNode {
  */
 export class ImportNode extends ASTNode {
   constructor(path, alias = null, location = null) {
-    super('Import', location);
+    super("Import", location);
     this.path = path;
     this.alias = alias;
+  }
+}
+
+/**
+ * Free text block
+ * Represents: ```text content```
+ */
+export class FreeTextNode extends ASTNode {
+  constructor(value, tags = [], location = null) {
+    super("FreeText", location);
+    this.value = value; // Processed text (after dedent)
+    this.tags = tags; // Array of TagNode
   }
 }
 
@@ -172,7 +190,7 @@ export class ImportNode extends ASTNode {
  */
 export class DocumentNode extends ASTNode {
   constructor(blocks = [], location = null) {
-    super('Document', location);
+    super("Document", location);
     this.blocks = blocks; // Top-level blocks
     this.imports = []; // ImportNode array
     this.templates = []; // Template nodes (Set, If, Foreach, etc.)
@@ -183,7 +201,13 @@ export class DocumentNode extends ASTNode {
  * Helper functions to create AST nodes
  */
 
-export function createBlock(id, properties = {}, children = [], tags = [], location = null) {
+export function createBlock(
+  id,
+  properties = {},
+  children = [],
+  tags = [],
+  location = null,
+) {
   return new BlockNode(id, properties, children, tags, location);
 }
 
@@ -211,11 +235,29 @@ export function createSet(name, value, location = null) {
   return new SetNode(name, value, location);
 }
 
-export function createIf(condition, thenBlocks, elseIfBranches = [], elseBlocks = [], location = null) {
-  return new IfNode(condition, thenBlocks, elseIfBranches, elseBlocks, location);
+export function createIf(
+  condition,
+  thenBlocks,
+  elseIfBranches = [],
+  elseBlocks = [],
+  location = null,
+) {
+  return new IfNode(
+    condition,
+    thenBlocks,
+    elseIfBranches,
+    elseBlocks,
+    location,
+  );
 }
 
-export function createForeach(itemVar, indexVar, collection, body, location = null) {
+export function createForeach(
+  itemVar,
+  indexVar,
+  collection,
+  body,
+  location = null,
+) {
   return new ForeachNode(itemVar, indexVar, collection, body, location);
 }
 
@@ -223,12 +265,21 @@ export function createWhile(condition, body, location = null) {
   return new WhileNode(condition, body, location);
 }
 
-export function createOnData(sourceName, dataBlocks, errorBlocks = [], location = null) {
+export function createOnData(
+  sourceName,
+  dataBlocks,
+  errorBlocks = [],
+  location = null,
+) {
   return new OnDataNode(sourceName, dataBlocks, errorBlocks, location);
 }
 
 export function createImport(path, alias = null, location = null) {
   return new ImportNode(path, alias, location);
+}
+
+export function createFreeText(value, tags = [], location = null) {
+  return new FreeTextNode(value, tags, location);
 }
 
 export function createDocument(blocks = [], location = null) {
