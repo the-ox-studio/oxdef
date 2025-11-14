@@ -49,6 +49,7 @@ export class InjectProcessor {
 
   /**
    * Recursively process inject directives in a node
+   * Injects are stored inline with blocks/children to preserve order
    *
    * @param {Object} node - AST node to process
    * @param {string} currentFile - Current file path
@@ -56,30 +57,6 @@ export class InjectProcessor {
    */
   processNodeInjects(node, currentFile, config) {
     if (!node) return;
-
-    // Process injects array if present (top-level injects for Document nodes)
-    if (
-      node.injects &&
-      Array.isArray(node.injects) &&
-      node.injects.length > 0
-    ) {
-      const expandedBlocks = [];
-
-      for (const injectNode of node.injects) {
-        const blocks = this.processInject(injectNode, currentFile, config);
-        expandedBlocks.push(...blocks);
-      }
-
-      // Insert expanded blocks at the beginning
-      if (expandedBlocks.length > 0) {
-        // Documents have 'blocks', Blocks have 'children'
-        const childrenKey = node.type === "Document" ? "blocks" : "children";
-        node[childrenKey] = [...expandedBlocks, ...(node[childrenKey] || [])];
-      }
-
-      // Clear injects array after processing
-      node.injects = [];
-    }
 
     // Get the appropriate children array (blocks for Document, children for Block)
     const childrenKey = node.type === "Document" ? "blocks" : "children";
@@ -101,34 +78,6 @@ export class InjectProcessor {
           const expandedBlocks = this.processInject(child, currentFile, config);
           newChildren.push(...expandedBlocks);
           continue;
-        }
-
-        // Check if child has inline injects (block-level injects)
-        if (
-          child.injects &&
-          Array.isArray(child.injects) &&
-          child.injects.length > 0
-        ) {
-          // Process child injects
-          const expandedBlocks = [];
-
-          for (const injectNode of child.injects) {
-            const blocks = this.processInject(injectNode, currentFile, config);
-            expandedBlocks.push(...blocks);
-          }
-
-          // Merge expanded blocks with existing children
-          if (expandedBlocks.length > 0) {
-            const childChildrenKey =
-              child.type === "Document" ? "blocks" : "children";
-            child[childChildrenKey] = [
-              ...expandedBlocks,
-              ...(child[childChildrenKey] || []),
-            ];
-          }
-
-          // Clear injects array after processing
-          child.injects = [];
         }
 
         // Recursively process nested blocks
@@ -173,6 +122,10 @@ export class InjectProcessor {
       // Load the file
       const fileData = this.loader.loadFile(resolvedPath);
 
+      // Process injects in the loaded file recursively
+      // This is where circular dependencies will be detected
+      this.processInjects(fileData.ast, resolvedPath, config);
+
       // Evaluate the file independently (parse + preprocess)
       // The file is evaluated in its own scope with its own variables/references
       const evaluatedBlocks = this.evaluateFile(
@@ -191,8 +144,7 @@ export class InjectProcessor {
 
   /**
    * Extract inject directives from AST (for debugging/analysis)
-   * Note: The parser stores injects in ast.injects array (top-level)
-   * and block.injects array (block children)
+   * Note: The parser stores injects inline with blocks to preserve order
    *
    * @param {Object} ast - Parsed AST
    * @returns {Array} Array of inject nodes with location info
@@ -200,14 +152,16 @@ export class InjectProcessor {
   extractInjects(ast) {
     const injects = [];
 
-    // Extract top-level injects
-    if (ast.injects && Array.isArray(ast.injects)) {
-      for (const injectNode of ast.injects) {
-        injects.push({
-          type: "top-level",
-          path: injectNode.path,
-          node: injectNode,
-        });
+    // Extract top-level injects (stored inline with blocks)
+    if (ast.blocks && Array.isArray(ast.blocks)) {
+      for (const item of ast.blocks) {
+        if (item.type === "Inject") {
+          injects.push({
+            type: "top-level",
+            path: item.path,
+            node: item,
+          });
+        }
       }
     }
 
@@ -227,21 +181,28 @@ export class InjectProcessor {
     for (const block of blocks) {
       if (!block) continue;
 
-      // Check if block has injects
-      if (block.injects && Array.isArray(block.injects)) {
-        for (const injectNode of block.injects) {
-          injects.push({
-            type: "block-child",
-            parentBlock: block.id || block.identifier,
-            path: injectNode.path,
-            node: injectNode,
-          });
-        }
-      }
+      // Skip non-block nodes (like Inject nodes at top level)
+      if (block.type !== "Block") continue;
 
-      // Recursively process nested blocks
-      if (block.blocks && Array.isArray(block.blocks)) {
-        this.extractBlockInjects(block.blocks, injects);
+      // Check children for injects (stored inline)
+      if (block.children && Array.isArray(block.children)) {
+        for (const child of block.children) {
+          if (child && child.type === "Inject") {
+            injects.push({
+              type: "block-child",
+              parentBlock: block.id || block.identifier,
+              path: child.path,
+              node: child,
+            });
+          }
+        }
+
+        // Recursively process nested blocks in children
+        for (const child of block.children) {
+          if (child && child.type === "Block") {
+            this.extractBlockInjects([child], injects);
+          }
+        }
       }
     }
   }

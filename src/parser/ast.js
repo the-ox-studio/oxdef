@@ -23,6 +23,7 @@ export class BlockNode extends ASTNode {
     this.properties = properties;
     this.children = children;
     this.tags = tags; // Array of TagNode
+    this.injects = []; // Array of InjectNode for block-level injects
   }
 }
 
@@ -174,6 +175,17 @@ export class ImportNode extends ASTNode {
 }
 
 /**
+ * Inject statement
+ * Represents: <inject "path">
+ */
+export class InjectNode extends ASTNode {
+  constructor(path, location = null) {
+    super("Inject", location);
+    this.path = path;
+  }
+}
+
+/**
  * Free text block
  * Represents: ```text content```
  */
@@ -193,6 +205,7 @@ export class DocumentNode extends ASTNode {
     super("Document", location);
     this.blocks = blocks; // Top-level blocks
     this.imports = []; // ImportNode array
+    this.injects = []; // InjectNode array
     this.templates = []; // Template nodes (Set, If, Foreach, etc.)
   }
 }
@@ -276,6 +289,10 @@ export function createOnData(
 
 export function createImport(path, alias = null, location = null) {
   return new ImportNode(path, alias, location);
+}
+
+export function createInject(path, location = null) {
+  return new InjectNode(path, location);
 }
 
 export function createFreeText(value, tags = [], location = null) {

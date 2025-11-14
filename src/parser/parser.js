@@ -14,6 +14,7 @@ import {
   createWhile,
   createOnData,
   createImport,
+  createInject,
   createFreeText,
 } from "./ast.js";
 import { processFreeText } from "../preprocessor/whitespace.js";
@@ -121,6 +122,9 @@ export class Parser {
         const template = this.parseTemplate();
         if (template.type === "Import") {
           doc.imports.push(template);
+        } else if (template.type === "Inject") {
+          // Keep injects inline with blocks to preserve order
+          doc.blocks.push(template);
         } else {
           doc.templates.push(template);
         }
@@ -225,7 +229,9 @@ export class Parser {
         children.push(this.parseFreeText());
       } else if (this.check(TokenType.LT)) {
         // Template inside block
-        children.push(this.parseTemplate());
+        const template = this.parseTemplate();
+        // Keep injects inline with children to preserve order
+        children.push(template);
       } else {
         this.error(`Unexpected token ${this.current().type} in block body`);
       }
@@ -601,6 +607,8 @@ export class Parser {
         return this.parseOnData(location);
       case "import":
         return this.parseImport(location);
+      case "inject":
+        return this.parseInject(location);
       default:
         this.error(`Unknown template keyword: ${keyword}`);
     }
@@ -950,6 +958,18 @@ export class Parser {
     this.expect(TokenType.GT);
 
     return createImport(path, alias, location);
+  }
+
+  /**
+   * Parse <inject "path">
+   */
+  parseInject(location) {
+    const pathToken = this.expect(TokenType.STRING, "Expected inject path");
+    const path = pathToken.value;
+
+    this.expect(TokenType.GT);
+
+    return createInject(path, location);
   }
 }
 

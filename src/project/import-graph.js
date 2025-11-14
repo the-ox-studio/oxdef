@@ -128,7 +128,7 @@ export class ImportGraph {
 
     const cycleString = cyclePath.join(" → ");
 
-    throw new Error(`Circular ${type} detected: ${cycleString}`);
+    throw new Error(`Circular ${type} dependency detected: ${cycleString}`);
   }
 
   /**
