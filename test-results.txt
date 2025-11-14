@@ -1,0 +1,526 @@
+
+> oxdefinition@0.1.0 test
+> node --test test/**/*.test.js
+
+▶ Transaction
+  [32m✔ creates transaction with variables [90m(0.9037ms)[39m[39m
+  [32m✔ creates transaction with functions [90m(0.2118ms)[39m[39m
+  [32m✔ adds and retrieves data sources [90m(0.2187ms)[39m[39m
+  [32m✔ supports data source wrappers with transaction access [90m(0.2923ms)[39m[39m
+  [32m✔ fetches data source successfully [90m(0.7665ms)[39m[39m
+  [32m✔ caches data source results [90m(0.9499ms)[39m[39m
+  [32m✔ handles data source timeout [90m(108.5322ms)[39m[39m
+  [32m✔ captures data source errors [90m(0.5634ms)[39m[39m
+  [32m✔ fetches multiple data sources in parallel [90m(14.4536ms)[39m[39m
+  [32m✔ handles mixed success and failure in parallel fetch [90m(0.5369ms)[39m[39m
+  [32m✔ clones transaction [90m(0.2638ms)[39m[39m
+  [32m✔ clears data source cache [90m(0.3672ms)[39m[39m
+[32m✔ Transaction [90m(129.8895ms)[39m[39m
+▶ DataSourceProcessor
+  [32m✔ detects simple data source in AST [90m(3.7134ms)[39m[39m
+  [32m✔ detects nested data sources [90m(0.4726ms)[39m[39m
+  [32m✔ detects parallel data sources [90m(0.3835ms)[39m[39m
+  [32m✔ validates data sources exist in transaction [90m(1.1637ms)[39m[39m
+  [32m✔ creates execution plan for parallel sources [90m(1.109ms)[39m[39m
+  [32m✔ creates execution plan for nested sources [90m(0.4578ms)[39m[39m
+  [32m✔ executes data sources according to plan [90m(0.5128ms)[39m[39m
+  [32m✔ executes nested data sources in order [90m(22.2709ms)[39m[39m
+  [32m✔ tracks successful and failed data sources [90m(0.5571ms)[39m[39m
+  [32m✔ retrieves data source results [90m(0.2463ms)[39m[39m
+  [32m✔ retrieves data source errors [90m(0.33ms)[39m[39m
+[32m✔ DataSourceProcessor [90m(31.8106ms)[39m[39m
+▶ ExpressionEvaluator - Literals
+  [32m✔ evaluates number literals [90m(1.0218ms)[39m[39m
+  [32m✔ evaluates string literals [90m(0.2577ms)[39m[39m
+  [32m✔ evaluates boolean literals [90m(0.1534ms)[39m[39m
+  [32m✔ evaluates null literal [90m(0.137ms)[39m[39m
+[32m✔ ExpressionEvaluator - Literals [90m(2.7076ms)[39m[39m
+▶ ExpressionEvaluator - Variables
+  [32m✔ evaluates simple variable reference [90m(1.9972ms)[39m[39m
+  [32m✔ evaluates member access [90m(0.3023ms)[39m[39m
+  [32m✔ evaluates nested member access [90m(0.3044ms)[39m[39m
+  [32m✔ throws on undefined variable [90m(0.9112ms)[39m[39m
+  [32m✔ throws on null property access [90m(0.2318ms)[39m[39m
+[32m✔ ExpressionEvaluator - Variables [90m(4.1389ms)[39m[39m
+▶ ExpressionEvaluator - Arithmetic
+  [32m✔ evaluates addition [90m(0.6016ms)[39m[39m
+  [32m✔ evaluates subtraction [90m(0.3189ms)[39m[39m
+  [32m✔ evaluates multiplication [90m(0.3299ms)[39m[39m
+  [32m✔ evaluates division [90m(0.3353ms)[39m[39m
+  [32m✔ evaluates modulo [90m(0.2258ms)[39m[39m
+  [32m✔ evaluates exponentiation [90m(0.1738ms)[39m[39m
+  [32m✔ respects operator precedence [90m(0.2005ms)[39m[39m
+  [32m✔ handles parentheses [90m(0.1613ms)[39m[39m
+  [32m✔ evaluates unary minus [90m(0.1255ms)[39m[39m
+  [32m✔ evaluates complex expression [90m(0.1533ms)[39m[39m
+[32m✔ ExpressionEvaluator - Arithmetic [90m(3.1341ms)[39m[39m
+▶ ExpressionEvaluator - Comparison
+  [32m✔ evaluates equality [90m(0.4073ms)[39m[39m
+  [32m✔ evaluates inequality [90m(0.1811ms)[39m[39m
+  [32m✔ evaluates less than [90m(0.3112ms)[39m[39m
+  [32m✔ evaluates greater than [90m(0.1998ms)[39m[39m
+  [32m✔ evaluates less than or equal [90m(0.1341ms)[39m[39m
+  [32m✔ evaluates greater than or equal [90m(0.1607ms)[39m[39m
+[32m✔ ExpressionEvaluator - Comparison [90m(1.7012ms)[39m[39m
+▶ ExpressionEvaluator - Logical
+  [32m✔ evaluates logical AND [90m(0.1937ms)[39m[39m
+  [32m✔ evaluates logical OR [90m(0.1124ms)[39m[39m
+  [32m✔ evaluates logical NOT [90m(0.1077ms)[39m[39m
+  [32m✔ evaluates complex logical expression [90m(0.1262ms)[39m[39m
+[32m✔ ExpressionEvaluator - Logical [90m(0.7615ms)[39m[39m
+▶ ExpressionEvaluator - Mixed Expressions
+  [32m✔ evaluates expression with variables [90m(0.3366ms)[39m[39m
+  [32m✔ evaluates comparison with variables [90m(0.1592ms)[39m[39m
+  [32m✔ evaluates complex condition [90m(0.198ms)[39m[39m
+[32m✔ ExpressionEvaluator - Mixed Expressions [90m(0.8918ms)[39m[39m
+▶ Tokenizer
+  [32m✔ tokenizes simple block [90m(1.6073ms)[39m[39m
+  [32m✔ tokenizes block with properties [90m(0.3752ms)[39m[39m
+  [32m✔ tokenizes strings [90m(0.231ms)[39m[39m
+  [32m✔ tokenizes escape sequences in strings [90m(0.1292ms)[39m[39m
+  [32m✔ tokenizes numbers [90m(0.2236ms)[39m[39m
+  [32m✔ tokenizes booleans [90m(0.1603ms)[39m[39m
+  [32m✔ tokenizes null [90m(0.1329ms)[39m[39m
+  [32m✔ tokenizes arrays [90m(0.1518ms)[39m[39m
+  [32m✔ tokenizes operators [90m(0.2813ms)[39m[39m
+  [32m✔ tokenizes references [90m(0.3297ms)[39m[39m
+  [32m✔ tokenizes tags [90m(0.2186ms)[39m[39m
+  [32m✔ tokenizes template markers [90m(0.4069ms)[39m[39m
+  [32m✔ skips line comments [90m(0.4705ms)[39m[39m
+  [32m✔ skips block comments [90m(2.2374ms)[39m[39m
+  [32m✔ tracks line and column numbers [90m(0.247ms)[39m[39m
+  [32m✔ throws error on unterminated string [90m(0.6398ms)[39m[39m
+  [32m✔ throws error on invalid character [90m(0.1429ms)[39m[39m
+  [32m✔ tokenizes complex nested structure [90m(0.204ms)[39m[39m
+[32m✔ Tokenizer [90m(10.1223ms)[39m[39m
+▶ Milestone 1: Pre-Parse Hook - Basic Execution
+  [32m✔ onParse callback executes before preprocessing [90m(1.7088ms)[39m[39m
+  [32m✔ onParse callback has access to ctx object [90m(0.336ms)[39m[39m
+[32m✔ Milestone 1: Pre-Parse Hook - Basic Execution [90m(3.0375ms)[39m[39m
+▶ Milestone 1: Tree Access and Walking
+  [32m✔ ctx.tree provides access to parsed AST [90m(1.2758ms)[39m[39m
+  [32m✔ ctx.walk() traverses tree structure [90m(1.0995ms)[39m[39m
+  [32m✔ ctx.walk() provides parent context [90m(0.3341ms)[39m[39m
+[32m✔ Milestone 1: Tree Access and Walking [90m(2.9297ms)[39m[39m
+▶ Milestone 1: Early Termination
+  [32m✔ ctx.finish() terminates preprocessing early [90m(0.3507ms)[39m[39m
+  [32m✔ finish() prevents further processing [90m(0.2382ms)[39m[39m
+[32m✔ Milestone 1: Early Termination [90m(0.7754ms)[39m[39m
+▶ Milestone 1: Raw AST Access
+  [32m✔ access raw templates from tree [90m(0.6199ms)[39m[39m
+  [32m✔ access raw expressions in properties [90m(0.5596ms)[39m[39m
+  [32m✔ inspect tags in raw tree [90m(0.8134ms)[39m[39m
+[32m✔ Milestone 1: Raw AST Access [90m(2.2346ms)[39m[39m
+▶ Milestone 1: Error Handling
+  [32m✔ MacroError is thrown for validation failures [90m(0.6508ms)[39m[39m
+  [32m✔ user errors in onParse are caught and wrapped [90m(0.1989ms)[39m[39m
+[32m✔ Milestone 1: Error Handling [90m(0.9521ms)[39m[39m
+▶ Milestone 1: Use Cases
+  [32m✔ Use case: Code generation - collect component definitions [90m(0.459ms)[39m[39m
+  [32m✔ Use case: Static analysis - validate block structure [90m(0.3234ms)[39m[39m
+  [32m✔ Use case: Conditional processing based on analysis [90m(0.2194ms)[39m[39m
+[32m✔ Milestone 1: Use Cases [90m(1.1204ms)[39m[39m
+▶ Milestone 1: Integration Tests
+  [32m✔ complex document analysis with multiple features [90m(0.6147ms)[39m[39m
+  [32m✔ parseWithMacros works without macro context [90m(0.1067ms)[39m[39m
+  [32m✔ parseWithMacros works with empty onParse [90m(0.0906ms)[39m[39m
+  [32m✔ multiple walk calls in onParse [90m(0.2117ms)[39m[39m
+  [32m✔ tree structure after onParse remains unchanged [90m(0.1647ms)[39m[39m
+[32m✔ Milestone 1: Integration Tests [90m(1.3391ms)[39m[39m
+▶ Milestone 2: Macro Walk Hook - Basic Execution
+  [32m✔ onWalk called for each block during preprocessing [90m(3.2473ms)[39m[39m
+  [32m✔ onWalk receives block and parent parameters [90m(0.4443ms)[39m[39m
+  [32m✔ onWalk called in correct order (parent before children) [90m(0.4864ms)[39m[39m
+[32m✔ Milestone 2: Macro Walk Hook - Basic Execution [90m(5.1608ms)[39m[39m
+▶ Milestone 2: Property Evaluation Guarantees
+  [32m✔ block properties are literals (evaluated) in onWalk [90m(0.5104ms)[39m[39m
+  [32m✔ children properties are still expressions in onWalk [90m(0.79ms)[39m[39m
+  [32m✔ expressions without $ are evaluated before onWalk [90m(0.5686ms)[39m[39m
+  [32m✔ module properties are available in onWalk [90m(0.3265ms)[39m[39m
+[32m✔ Milestone 2: Property Evaluation Guarantees [90m(2.4816ms)[39m[39m
+▶ Milestone 2: Auto-processing
+  [32m✔ children auto-expand after onWalk returns [90m(0.3824ms)[39m[39m
+  [32m✔ children become available with evaluated properties [90m(0.3409ms)[39m[39m
+  [32m✔ nested blocks all process correctly [90m(0.4505ms)[39m[39m
+[32m✔ Milestone 2: Auto-processing [90m(1.4257ms)[39m[39m
+▶ Milestone 2: Property Modification
+  [32m✔ can modify block properties in onWalk [90m(0.3436ms)[39m[39m
+  [32m✔ can add new properties in onWalk [90m(0.271ms)[39m[39m
+[32m✔ Milestone 2: Property Modification [90m(0.7899ms)[39m[39m
+▶ Milestone 2: Validation
+  [32m✔ can validate required properties with throwError [90m(1.1498ms)[39m[39m
+  [32m✔ can set default values for missing properties [90m(0.2762ms)[39m[39m
+[32m✔ Milestone 2: Validation [90m(1.5458ms)[39m[39m
+▶ Milestone 2: Integration
+  [32m✔ onWalk works with templates (if, foreach) [90m(1.2535ms)[39m[39m
+  [32m✔ onWalk works with reference resolution [90m(0.5103ms)[39m[39m
+[32m✔ Milestone 2: Integration [90m(1.8986ms)[39m[39m
+▶ Milestone 2: Error Handling
+  [32m✔ user errors in onWalk are caught and wrapped [90m(0.2398ms)[39m[39m
+  [32m✔ MacroError in onWalk is re-thrown without wrapping [90m(0.1901ms)[39m[39m
+[32m✔ Milestone 2: Error Handling [90m(0.5185ms)[39m[39m
+▶ Milestone 2: Advanced Use Cases
+  [32m✔ track and validate parent-child relationships [90m(0.3583ms)[39m[39m
+  [32m✔ accumulate properties from ancestors [90m(0.1999ms)[39m[39m
+  [32m✔ collect block metadata during preprocessing [90m(0.3736ms)[39m[39m
+  [32m✔ onWalk without macro context works normally [90m(0.1453ms)[39m[39m
+  [32m✔ empty onWalk callback still processes correctly [90m(0.1795ms)[39m[39m
+  [32m✔ complex property transformations in onWalk [90m(0.2075ms)[39m[39m
+[32m✔ Milestone 2: Advanced Use Cases [90m(1.6642ms)[39m[39m
+▶ Milestone 3: Cursor Control - Basic Operations
+  [32m✔ nextBlock() peeks at next block without advancing [90m(2.3581ms)[39m[39m
+  [32m✔ peekNext() returns block with parent context [90m(0.4098ms)[39m[39m
+  [32m✔ current() returns current block with parent [90m(0.347ms)[39m[39m
+[32m✔ Milestone 3: Cursor Control - Basic Operations [90m(4.0212ms)[39m[39m
+▶ Milestone 3: Manual Walk Invocation
+  [32m✔ invokeWalk() manually processes a child block [90m(0.6142ms)[39m[39m
+  [32m✔ invokeWalk() evaluates properties before calling onWalk [90m(0.8023ms)[39m[39m
+  [32m✔ invokeWalk() processes grandchildren correctly [90m(0.3185ms)[39m[39m
+[32m✔ Milestone 3: Manual Walk Invocation [90m(1.9439ms)[39m[39m
+▶ Milestone 3: Auto-processing
+  [32m✔ children not manually walked are auto-processed [90m(0.3197ms)[39m[39m
+  [32m✔ mix of manual and auto-processed children [90m(0.3154ms)[39m[39m
+  [32m✔ deeply nested auto-processing works correctly [90m(0.917ms)[39m[39m
+  [32m✔ auto-processing respects property evaluation [90m(0.7228ms)[39m[39m
+[32m✔ Milestone 3: Auto-processing [90m(2.5726ms)[39m[39m
+▶ Milestone 3: Advanced Use Cases
+  [32m✔ Use case: Auto-sizing container from children [90m(1.1927ms)[39m[39m
+  [32m✔ Use case: Conditional child processing based on visibility [90m(0.3675ms)[39m[39m
+  [32m✔ Use case: Peek and validate before processing [90m(0.42ms)[39m[39m
+  [32m✔ Use case: Compute relative positions from siblings [90m(0.2607ms)[39m[39m
+  [32m✔ Use case: Process children in reverse order [90m(0.2194ms)[39m[39m
+[32m✔ Milestone 3: Advanced Use Cases [90m(2.6931ms)[39m[39m
+▶ Milestone 3: Error Handling
+  [32m✔ cursor control methods throw error outside onWalk [90m(0.4878ms)[39m[39m
+  [32m✔ invokeWalk throws error outside onWalk [90m(0.1602ms)[39m[39m
+  [32m✔ errors in manually invoked blocks are caught and wrapped [90m(0.21ms)[39m[39m
+[32m✔ Milestone 3: Error Handling [90m(0.9753ms)[39m[39m
+▶ Milestone 3: Integration Tests
+  [32m✔ cursor control works with templates (foreach, if) [90m(0.9446ms)[39m[39m
+  [32m✔ Milestone 2 and 3 work together correctly [90m(0.2818ms)[39m[39m
+  [32m✔ complex nested structure with mixed manual and auto-processing [90m(0.2449ms)[39m[39m
+[32m✔ Milestone 3: Integration Tests [90m(1.591ms)[39m[39m
+▶ Parser
+  [32m✔ parses simple block [90m(2.7253ms)[39m[39m
+  [32m✔ parses block with properties [90m(0.5259ms)[39m[39m
+  [32m✔ parses block with string properties [90m(0.2469ms)[39m[39m
+  [32m✔ parses nested blocks [90m(0.2549ms)[39m[39m
+  [32m✔ parses array properties [90m(1.0416ms)[39m[39m
+  [32m✔ parses expression properties [90m(0.4719ms)[39m[39m
+  [32m✔ parses tags on blocks [90m(0.2783ms)[39m[39m
+  [32m✔ parses tags with arguments [90m(0.1907ms)[39m[39m
+  [32m✔ parses multiple tags [90m(0.1908ms)[39m[39m
+  [32m✔ parses set template [90m(0.5078ms)[39m[39m
+  [32m✔ parses if template [90m(0.4205ms)[39m[39m
+  [32m✔ parses if-else template [90m(0.1719ms)[39m[39m
+  [32m✔ parses if-elseif-else template [90m(0.2287ms)[39m[39m
+  [32m✔ parses foreach template [90m(0.2715ms)[39m[39m
+  [32m✔ parses foreach with index [90m(0.1105ms)[39m[39m
+  [32m✔ parses while template [90m(0.2788ms)[39m[39m
+  [32m✔ parses on-data template [90m(0.2824ms)[39m[39m
+  [32m✔ parses on-data with error handling [90m(0.1583ms)[39m[39m
+  [32m✔ parses import statement [90m(0.1896ms)[39m[39m
+  [32m✔ parses import with alias [90m(0.0895ms)[39m[39m
+  [32m✔ parses complex document [90m(0.2442ms)[39m[39m
+  [32m✔ throws error on unclosed block [90m(0.469ms)[39m[39m
+  [32m✔ throws error on missing block identifier [90m(0.1145ms)[39m[39m
+  [32m✔ throws error on unclosed if [90m(0.1591ms)[39m[39m
+  [32m✔ throws error on mismatched closing tag [90m(0.144ms)[39m[39m
+[32m✔ Parser [90m(11.4959ms)[39m[39m
+▶ BlockRegistry
+  [32m✔ should register a block [90m(1.3045ms)[39m[39m
+  [32m✔ should track parent-child relationships [90m(0.1881ms)[39m[39m
+  [32m✔ should build siblings after registration [90m(0.3236ms)[39m[39m
+  [32m✔ should find sibling by ID [90m(0.2002ms)[39m[39m
+  [32m✔ should return null for non-existent sibling [90m(0.1453ms)[39m[39m
+[32m✔ BlockRegistry [90m(3.2298ms)[39m[39m
+▶ BlockRegistryBuilder
+  [32m✔ should build registry from simple AST [90m(0.2983ms)[39m[39m
+  [32m✔ should build registry from nested AST [90m(0.1961ms)[39m[39m
+  [32m✔ should skip Expression properties in Pass 1 [90m(0.2305ms)[39m[39m
+[32m✔ BlockRegistryBuilder [90m(0.9773ms)[39m[39m
+▶ ReferenceResolver - $this references
+  [32m✔ should resolve $this.property [90m(1.0323ms)[39m[39m
+  [32m✔ should throw error if $this property not found [90m(0.6391ms)[39m[39m
+[32m✔ ReferenceResolver - $this references [90m(1.8317ms)[39m[39m
+▶ ReferenceResolver - $parent references
+  [32m✔ should resolve $parent.property [90m(0.2802ms)[39m[39m
+  [32m✔ should resolve $parent.parent chaining [90m(0.2023ms)[39m[39m
+  [32m✔ should throw error if $parent used on root block [90m(0.2173ms)[39m[39m
+[32m✔ ReferenceResolver - $parent references [90m(0.8397ms)[39m[39m
+▶ ReferenceResolver - $BlockId references
+  [32m✔ should resolve $BlockId.property for sibling [90m(0.2424ms)[39m[39m
+  [32m✔ should throw error if sibling block not found [90m(0.2151ms)[39m[39m
+[32m✔ ReferenceResolver - $BlockId references [90m(0.5506ms)[39m[39m
+▶ ReferenceResolver - Complex expressions
+  [32m✔ should resolve references in arithmetic expressions [90m(0.2005ms)[39m[39m
+  [32m✔ should resolve multiple different reference types in one expression [90m(0.2047ms)[39m[39m
+[32m✔ ReferenceResolver - Complex expressions [90m(0.4858ms)[39m[39m
+▶ ReferenceResolver - Edge cases
+  [32m✔ should throw error for incomplete reference (missing property) [90m(0.2056ms)[39m[39m
+  [32m✔ should throw error for invalid reference name [90m(0.2011ms)[39m[39m
+[32m✔ ReferenceResolver - Edge cases [90m(0.4796ms)[39m[39m
+▶ Tag Registry
+  [32m✔ defines and retrieves tags [90m(0.856ms)[39m[39m
+  [32m✔ prevents duplicate tag definitions [90m(1.2103ms)[39m[39m
+  [32m✔ registers tag instances [90m(0.2289ms)[39m[39m
+  [32m✔ prevents duplicate instance registration [90m(0.249ms)[39m[39m
+  [32m✔ gets instances for tag name [90m(0.2164ms)[39m[39m
+[32m✔ Tag Registry [90m(3.7997ms)[39m[39m
+▶ Tag Processor
+  [32m✔ creates instance keys [90m(0.2726ms)[39m[39m
+  [32m✔ detects tag usage types [90m(0.2781ms)[39m[39m
+  [32m✔ throws on mixed tag types [90m(0.2205ms)[39m[39m
+  [32m✔ validates tag definitions [90m(0.2967ms)[39m[39m
+  [32m✔ throws on undefined tag [90m(0.2194ms)[39m[39m
+  [32m✔ throws on tag definition with expression [90m(0.1745ms)[39m[39m
+  [32m✔ throws on composition with properties [90m(0.1651ms)[39m[39m
+  [32m✔ throws on composition with children [90m(0.1338ms)[39m[39m
+  [32m✔ processes tag definitions [90m(1.358ms)[39m[39m
+  [32m✔ keeps tag definitions when canOutput is true [90m(0.1932ms)[39m[39m
+  [32m✔ validates instances reference existing definitions [90m(0.3998ms)[39m[39m
+[32m✔ Tag Processor [90m(4.1274ms)[39m[39m
+▶ Tag Expansion
+  [32m✔ expands single tag instance [90m(0.638ms)[39m[39m
+  [32m✔ expands tag instance with inherited children [90m(0.4305ms)[39m[39m
+  [32m✔ expands tag composition [90m(0.4732ms)[39m[39m
+  [32m✔ expands nested tag instances [90m(0.2209ms)[39m[39m
+  [32m✔ clones blocks independently [90m(0.285ms)[39m[39m
+[32m✔ Tag Expansion [90m(2.2095ms)[39m[39m
+▶ Module Property Injection
+  [32m✔ injects module properties from tag definition [90m(0.5258ms)[39m[39m
+  [32m✔ throws on module property conflict [90m(0.2107ms)[39m[39m
+  [32m✔ injects module properties with various types [90m(0.2766ms)[39m[39m
+  [32m✔ injects module properties into nested blocks [90m(0.2598ms)[39m[39m
+  [32m✔ handles multiple tags with different module properties [90m(0.2607ms)[39m[39m
+  [32m✔ module properties are called fresh each time [90m(0.2168ms)[39m[39m
+  [32m✔ handles empty module definition [90m(0.1476ms)[39m[39m
+  [32m✔ handles blocks without tags [90m(0.1399ms)[39m[39m
+  [32m✔ module getters receive context with tag information [90m(0.2415ms)[39m[39m
+  [32m✔ module getters support backward compatibility (no context) [90m(0.1759ms)[39m[39m
+[32m✔ Module Property Injection [90m(2.7718ms)[39m[39m
+▶ Critical Fixes
+  [32m✔ deep clone prevents shared nested object references [90m(0.4315ms)[39m[39m
+  [32m✔ deep clone handles nested arrays recursively [90m(0.1873ms)[39m[39m
+  [32m✔ detects circular tag dependencies in direct recursion [90m(0.2414ms)[39m[39m
+  [32m✔ detects circular tag dependencies in indirect recursion [90m(0.2366ms)[39m[39m
+  [32m✔ allows non-circular recursive structures [90m(0.2661ms)[39m[39m
+[32m✔ Critical Fixes [90m(1.5642ms)[39m[39m
+▶ Template Expansion - <set>
+  [32m✔ sets variable with literal value [90m(2.5693ms)[39m[39m
+  [32m✔ sets variable with expression [90m(0.7232ms)[39m[39m
+  [32m✔ set template produces no blocks [90m(0.198ms)[39m[39m
+  [32m✔ sets multiple variables in sequence [90m(0.23ms)[39m[39m
+[32m✔ Template Expansion - <set> [90m(4.7483ms)[39m[39m
+▶ Template Expansion - <if>
+  [32m✔ expands then block when condition is true [90m(0.5971ms)[39m[39m
+  [32m✔ does not expand then block when condition is false [90m(0.2321ms)[39m[39m
+  [32m✔ expands else block when condition is false [90m(0.2467ms)[39m[39m
+  [32m✔ expands elseif block when condition matches [90m(0.6219ms)[39m[39m
+  [32m✔ evaluates first matching elseif only [90m(0.3849ms)[39m[39m
+  [32m✔ handles complex conditions [90m(0.3395ms)[39m[39m
+  [32m✔ expands multiple blocks in branch [90m(0.199ms)[39m[39m
+[32m✔ Template Expansion - <if> [90m(2.9933ms)[39m[39m
+▶ Template Expansion - <foreach>
+  [32m✔ expands blocks for each item in array [90m(0.562ms)[39m[39m
+  [32m✔ makes item available as variable [90m(0.3352ms)[39m[39m
+  [32m✔ provides index variable when specified [90m(0.2129ms)[39m[39m
+  [32m✔ handles empty array [90m(0.142ms)[39m[39m
+  [32m✔ cleans up item variable after loop [90m(0.1744ms)[39m[39m
+  [32m✔ restores previous item variable value [90m(0.1501ms)[39m[39m
+  [32m✔ throws on non-array collection [90m(0.5245ms)[39m[39m
+[32m✔ Template Expansion - <foreach> [90m(2.3162ms)[39m[39m
+▶ Template Expansion - <while>
+  [31m✖ expands blocks while condition is true [90m(0.3468ms)[39m[39m
+  [32m✔ does not expand when condition is initially false [90m(0.2175ms)[39m[39m
+  [32m✔ prevents infinite loops with max iterations [90m(18.7616ms)[39m[39m
+  [31m✖ handles complex loop with variable updates [90m(0.2995ms)[39m[39m
+[31m✖ Template Expansion - <while> [90m(19.8733ms)[39m[39m
+▶ Template Expansion - Nested Templates
+  [32m✔ handles nested if templates [90m(0.7405ms)[39m[39m
+  [32m✔ handles foreach inside if [90m(0.7658ms)[39m[39m
+  [31m✖ handles if inside foreach [90m(0.1855ms)[39m[39m
+  [31m✖ handles set inside foreach [90m(0.1728ms)[39m[39m
+[31m✖ Template Expansion - Nested Templates [90m(2.0484ms)[39m[39m
+▶ Template Expansion - Integration
+  [31m✖ expands complex template combination [90m(0.2934ms)[39m[39m
+[31m✖ Template Expansion - Integration [90m(0.3947ms)[39m[39m
+▶ TemplateExpander - OnData
+  [32m✔ expands on-data block with successful fetch [90m(4.264ms)[39m[39m
+  [32m✔ expands on-error block with failed fetch [90m(0.5ms)[39m[39m
+  [32m✔ makes data source result available as variable [90m(0.3765ms)[39m[39m
+  [32m✔ makes error available as $error variable [90m(0.5106ms)[39m[39m
+  [32m✔ handles nested on-data blocks [90m(0.5928ms)[39m[39m
+  [32m✔ handles multiple parallel on-data blocks [90m(0.473ms)[39m[39m
+  [32m✔ handles mixed success and error blocks [90m(0.5848ms)[39m[39m
+  [32m✔ preserves block children when expanding [90m(0.5008ms)[39m[39m
+  [32m✔ handles empty data source results [90m(0.5324ms)[39m[39m
+  [32m✔ cleans up variables after expansion [90m(0.5885ms)[39m[39m
+  [32m✔ cleans up $error variable after expansion [90m(0.8759ms)[39m[39m
+  [32m✔ handles on-data with no error block when fetch fails [90m(0.3417ms)[39m[39m
+  [32m✔ expands multiple levels of nesting [90m(0.3892ms)[39m[39m
+[32m✔ TemplateExpander - OnData [90m(12.0475ms)[39m[39m
+▶ Two-Pass Integration - $parent references
+  [32m✔ should resolve $parent.property in nested blocks [90m(3.8257ms)[39m[39m
+  [32m✔ should resolve $parent.parent chaining [90m(0.4195ms)[39m[39m
+  [32m✔ should resolve $parent in arithmetic expressions [90m(0.4239ms)[39m[39m
+[32m✔ Two-Pass Integration - $parent references [90m(5.624ms)[39m[39m
+▶ Two-Pass Integration - $this references
+  [32m✔ should resolve $this.property [90m(0.3143ms)[39m[39m
+[32m✔ Two-Pass Integration - $this references [90m(0.4546ms)[39m[39m
+▶ Two-Pass Integration - $BlockId references
+  [32m✔ should resolve sibling block references [90m(0.5202ms)[39m[39m
+  [32m✔ should resolve forward references (sibling defined later) [90m(0.4212ms)[39m[39m
+[32m✔ Two-Pass Integration - $BlockId references [90m(1.153ms)[39m[39m
+▶ Two-Pass Integration - Complex scenarios
+  [32m✔ should handle mixed reference types in one expression [90m(0.7295ms)[39m[39m
+  [32m✔ should handle references with conditional templates [90m(1.1157ms)[39m[39m
+  [32m✔ should resolve references without breaking non-reference expressions [90m(0.35ms)[39m[39m
+[32m✔ Two-Pass Integration - Complex scenarios [90m(2.4792ms)[39m[39m
+▶ Two-Pass Integration - Error handling
+  [32m✔ should throw error for $parent on root block [90m(0.994ms)[39m[39m
+  [32m✔ should throw error for undefined sibling reference [90m(0.2227ms)[39m[39m
+  [32m✔ should throw error for undefined property reference [90m(0.1992ms)[39m[39m
+[32m✔ Two-Pass Integration - Error handling [90m(1.5379ms)[39m[39m
+▶ TreeWalker - Depth-First Traversal
+  [32m✔ pre-order traversal visits parent before children [90m(1.6007ms)[39m[39m
+  [32m✔ post-order traversal visits children before parent [90m(0.2133ms)[39m[39m
+  [32m✔ pre-order traversal provides correct parent references [90m(0.21ms)[39m[39m
+  [32m✔ TreeWalker tracks parent chain correctly [90m(0.1794ms)[39m[39m
+  [32m✔ depth-first traversal handles single node tree [90m(0.148ms)[39m[39m
+[32m✔ TreeWalker - Depth-First Traversal [90m(3.3753ms)[39m[39m
+▶ TreeWalker - Breadth-First Traversal
+  [32m✔ breadth-first traversal visits level by level [90m(0.2695ms)[39m[39m
+  [32m✔ breadth-first traversal provides correct parent references [90m(0.2168ms)[39m[39m
+[32m✔ TreeWalker - Breadth-First Traversal [90m(1.4122ms)[39m[39m
+▶ TreeWalker - Control Flow
+  [32m✔ WalkerControl.STOP terminates traversal early [90m(0.2701ms)[39m[39m
+  [32m✔ WalkerControl.SKIP skips children of current node [90m(0.1834ms)[39m[39m
+[32m✔ TreeWalker - Control Flow [90m(0.6176ms)[39m[39m
+▶ TreeWalker - Filtering
+  [32m✔ filter option excludes non-matching nodes [90m(0.2683ms)[39m[39m
+  [32m✔ filter can use parent context for filtering [90m(0.1443ms)[39m[39m
+[32m✔ TreeWalker - Filtering [90m(0.5473ms)[39m[39m
+▶ Utility Functions
+  [32m✔ findNode returns first matching node [90m(0.1718ms)[39m[39m
+  [32m✔ findNode returns null if no match found [90m(0.0897ms)[39m[39m
+  [32m✔ findAllNodes returns all matching nodes [90m(0.1211ms)[39m[39m
+  [32m✔ findByTag finds nodes with specific tag [90m(0.1868ms)[39m[39m
+  [32m✔ findByProperty finds nodes with specific property [90m(0.1179ms)[39m[39m
+  [32m✔ findByProperty can match property value [90m(0.0808ms)[39m[39m
+[32m✔ Utility Functions [90m(0.919ms)[39m[39m
+▶ MacroWalker - Cursor Control
+  [32m✔ nextBlock peeks at next node without advancing [90m(0.2522ms)[39m[39m
+  [32m✔ invokeWalk allows jumping to specific block [90m(0.209ms)[39m[39m
+  [32m✔ back moves cursor backward [90m(0.1637ms)[39m[39m
+  [32m✔ getRemainingChildren returns children of specific parent [90m(0.1555ms)[39m[39m
+  [32m✔ current returns current block with parent [90m(0.1152ms)[39m[39m
+[32m✔ MacroWalker - Cursor Control [90m(1.0258ms)[39m[39m
+▶ MacroWalker - Auto-processing
+  [32m✔ MacroWalker processes all blocks in flattened order [90m(0.1338ms)[39m[39m
+  [32m✔ MacroWalker stop method halts traversal [90m(0.1289ms)[39m[39m
+[32m✔ MacroWalker - Auto-processing [90m(0.3511ms)[39m[39m
+▶ Edge Cases and Integration
+  [32m✔ getAncestors returns correct ancestor chain [90m(0.214ms)[39m[39m
+  [32m✔ getAncestors returns empty array for root node [90m(0.0947ms)[39m[39m
+  [32m✔ walk handles empty children array [90m(0.119ms)[39m[39m
+  [32m✔ walk handles null tree gracefully [90m(0.0753ms)[39m[39m
+  [32m✔ filter with SKIP control works correctly [90m(0.1148ms)[39m[39m
+  [32m✔ MacroWalker peekNext returns null at end [90m(0.113ms)[39m[39m
+  [32m✔ complex tree traversal with mixed controls [90m(0.1269ms)[39m[39m
+[32m✔ Edge Cases and Integration [90m(1.0278ms)[39m[39m
+[34mℹ tests 301[39m
+[34mℹ suites 63[39m
+[34mℹ pass 296[39m
+[34mℹ fail 5[39m
+[34mℹ cancelled 0[39m
+[34mℹ skipped 0[39m
+[34mℹ todo 0[39m
+[34mℹ duration_ms 807.0061[39m
+
+[31m✖ failing tests:[39m
+
+test at test\template-expansion.test.js:392:3
+[31m✖ expands blocks while condition is true [90m(0.3468ms)[39m[39m
+  Error [ParseError]: Expected SLASH but got IDENTIFIER
+      at Parser.error (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:96:11)
+      at Parser.expect (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:87:10)
+      at Parser.parseWhile (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:610:10)
+      at Parser.parseTemplate (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:354:21)
+      at Parser.parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:115:31)
+      at parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:722:17)
+      at TestContext.<anonymous> (file:///C:/Dev/Desinda/Tools/oxdefinition/test/template-expansion.test.js:406:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Test.start (node:internal/test_runner/test:1003:17) {
+    location: { file: '<input>', line: 3, column: 10 },
+    context: null
+  }
+
+test at test\template-expansion.test.js:453:3
+[31m✖ handles complex loop with variable updates [90m(0.2995ms)[39m[39m
+  Error [ParseError]: Expected SLASH but got IDENTIFIER
+      at Parser.error (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:96:11)
+      at Parser.expect (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:87:10)
+      at Parser.parseWhile (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:610:10)
+      at Parser.parseTemplate (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:354:21)
+      at Parser.parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:115:31)
+      at parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:722:17)
+      at TestContext.<anonymous> (file:///C:/Dev/Desinda/Tools/oxdefinition/test/template-expansion.test.js:469:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:788:18) {
+    location: { file: '<input>', line: 3, column: 10 },
+    context: null
+  }
+
+test at test\template-expansion.test.js:528:3
+[31m✖ handles if inside foreach [90m(0.1855ms)[39m[39m
+  Error [ParseError]: Expected SLASH but got IDENTIFIER
+      at Parser.error (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:96:11)
+      at Parser.expect (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:87:10)
+      at Parser.parseForeach (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:578:10)
+      at Parser.parseTemplate (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:352:21)
+      at Parser.parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:115:31)
+      at parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:722:17)
+      at TestContext.<anonymous> (file:///C:/Dev/Desinda/Tools/oxdefinition/test/template-expansion.test.js:545:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:788:18) {
+    location: { file: '<input>', line: 3, column: 10 },
+    context: null
+  }
+
+test at test\template-expansion.test.js:556:3
+[31m✖ handles set inside foreach [90m(0.1728ms)[39m[39m
+  Error [ParseError]: Expected SLASH but got IDENTIFIER
+      at Parser.error (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:96:11)
+      at Parser.expect (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:87:10)
+      at Parser.parseForeach (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:578:10)
+      at Parser.parseTemplate (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:352:21)
+      at Parser.parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:115:31)
+      at parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:722:17)
+      at TestContext.<anonymous> (file:///C:/Dev/Desinda/Tools/oxdefinition/test/template-expansion.test.js:570:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:788:18) {
+    location: { file: '<input>', line: 3, column: 10 },
+    context: null
+  }
+
+test at test\template-expansion.test.js:581:3
+[31m✖ expands complex template combination [90m(0.2934ms)[39m[39m
+  Error [ParseError]: Expected SLASH but got IDENTIFIER
+      at Parser.error (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:96:11)
+      at Parser.expect (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:87:10)
+      at Parser.parseForeach (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:578:10)
+      at Parser.parseTemplate (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:352:21)
+      at Parser.parseBlock (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:171:28)
+      at Parser.parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:125:30)
+      at parse (file:///C:/Dev/Desinda/Tools/oxdefinition/src/parser/parser.js:722:17)
+      at TestContext.<anonymous> (file:///C:/Dev/Desinda/Tools/oxdefinition/test/template-expansion.test.js:610:17)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1106:25) {
+    location: { file: '<input>', line: 10, column: 12 },
+    context: null
+  }
