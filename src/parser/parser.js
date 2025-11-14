@@ -155,12 +155,12 @@ export class Parser {
     const startToken = this.expect(TokenType.LBRACKET);
     const location = this.getLocation(startToken);
 
-    // Parse identifier
-    const idToken = this.expect(
-      TokenType.IDENTIFIER,
-      "Expected block identifier",
-    );
-    const id = idToken.value;
+    // Parse identifier (now optional - allows anonymous blocks)
+    let id = null;
+    if (this.check(TokenType.IDENTIFIER)) {
+      const idToken = this.advance();
+      id = idToken.value;
+    }
 
     // Parse properties (optional)
     let properties = {};

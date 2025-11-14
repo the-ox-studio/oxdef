@@ -179,7 +179,7 @@ Tags allow users to:
 ```
 
 **Components:**
-- `Identifier`: Block type/name (alphanumeric, underscore, hyphen)
+- `Identifier`: Block type/name (alphanumeric, underscore, hyphen) - **Optional** for anonymous blocks
 - `(properties)`: Optional key-value pairs
 - `{children}`: Child blocks
 
@@ -201,6 +201,100 @@ Tags allow users to:
 // Block with properties and children
 [Container (width: 200)
   [Child (x: 10)]
+]
+```
+
+### Anonymous Blocks
+
+Blocks can be created without identifiers, making them useful for list-like structures, data arrays, and template-generated content. Anonymous blocks are accessed by position using the `children` property.
+
+**Syntax:**
+
+```ox
+// Empty anonymous block
+[ ]
+
+// Anonymous block with properties
+[ (x: 10, y: 20)]
+
+// Anonymous block with children
+[
+  [Child1]
+  [Child2]
+]
+
+// Anonymous block with tag instance
+#myTag [ ]
+```
+
+**Accessing Anonymous Blocks:**
+
+Anonymous blocks can only be accessed via their parent's `children` array using bracket notation:
+
+```ox
+[Container
+  [ (value: 10)]
+  [ (value: 20)]
+  [ (value: 30)]
+  [Display (
+    first: ($parent.children[0].value),
+    second: ($parent.children[1].value)
+  )]
+]
+```
+
+**Mixed Named and Anonymous:**
+
+Both named and anonymous blocks can coexist. Named blocks are accessible both by name and by index:
+
+```ox
+[Container
+  [Header (title: "Top")]        // Index 0, also accessible as $Header
+  [ (data: "anonymous")]         // Index 1, only accessible by index
+  [Footer (title: "Bottom")]     // Index 2, also accessible as $Footer
+  [Display (
+    headerByName: ($Header.title),
+    headerByIndex: ($parent.children[0].title),
+    anonymousData: ($parent.children[1].data)
+  )]
+]
+```
+
+**Use Cases:**
+
+1. **List-like structures:**
+```ox
+[Menu
+  [ (label: "File")]
+  [ (label: "Edit")]
+  [ (label: "View")]
+]
+```
+
+2. **Data arrays:**
+```ox
+[Dataset
+  [ (x: 10, y: 20)]
+  [ (x: 15, y: 25)]
+  [ (x: 20, y: 30)]
+]
+```
+
+3. **Template-generated content:**
+```ox
+[Grid
+  <if (true)>
+    [ (cell: "Generated")]
+  </if>
+]
+```
+
+4. **Tag instances without customization:**
+```ox
+@entity(Player) [Player (health: 100)]
+
+[World
+  #entity(Player) [ ]  // Gets all default properties from tag
 ]
 ```
 

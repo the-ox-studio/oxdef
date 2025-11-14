@@ -339,7 +339,7 @@ export class ExpressionEvaluator {
 
   /**
    * Parse variable reference with optional member access
-   * Examples: foo, foo.bar, foo.bar.baz
+   * Examples: foo, foo.bar, foo.bar.baz, foo[0], foo.bar[1].baz
    */
   parseReference(tokens, index) {
     let name = tokens[index].value;
@@ -356,32 +356,79 @@ export class ExpressionEvaluator {
       );
     }
 
-    // Handle member access (foo.bar.baz)
-    while (index < tokens.length && tokens[index].type === TokenType.DOT) {
-      index++; // consume .
-      if (
-        index >= tokens.length ||
-        tokens[index].type !== TokenType.IDENTIFIER
-      ) {
-        throw new PreprocessError(
-          "Expected property name after '.'",
-          "ExpectedPropertyName",
-          null,
-        );
+    // Handle member access (foo.bar.baz) and array indexing (foo[0])
+    while (
+      index < tokens.length &&
+      (tokens[index].type === TokenType.DOT ||
+        tokens[index].type === TokenType.LBRACKET)
+    ) {
+      if (tokens[index].type === TokenType.DOT) {
+        index++; // consume .
+        if (
+          index >= tokens.length ||
+          tokens[index].type !== TokenType.IDENTIFIER
+        ) {
+          throw new PreprocessError(
+            "Expected property name after '.'",
+            "ExpectedPropertyName",
+            null,
+          );
+        }
+
+        const propName = tokens[index].value;
+        index++;
+
+        if (value === null || value === undefined) {
+          throw new PreprocessError(
+            `Cannot access property '${propName}' of ${value}`,
+            "NullPropertyAccess",
+            null,
+          );
+        }
+
+        value = value[propName];
+      } else if (tokens[index].type === TokenType.LBRACKET) {
+        // Array indexing: foo[0] or foo[expr]
+        index++; // consume [
+
+        // Parse the index expression
+        const indexResult = this.parseExpression(tokens, index);
+        const indexValue = indexResult.value;
+        index = indexResult.nextIndex;
+
+        // Expect closing ]
+        if (
+          index >= tokens.length ||
+          tokens[index].type !== TokenType.RBRACKET
+        ) {
+          throw new PreprocessError(
+            "Expected ']' after array index",
+            "ExpectedRBracket",
+            null,
+          );
+        }
+        index++; // consume ]
+
+        // Check that value is array-like
+        if (value === null || value === undefined) {
+          throw new PreprocessError(
+            `Cannot index ${value}`,
+            "NullIndexAccess",
+            null,
+          );
+        }
+
+        if (!Array.isArray(value) && typeof value !== "object") {
+          throw new PreprocessError(
+            `Cannot index non-array/object value`,
+            "InvalidIndexAccess",
+            null,
+          );
+        }
+
+        // Access by index
+        value = value[indexValue];
       }
-
-      const propName = tokens[index].value;
-      index++;
-
-      if (value === null || value === undefined) {
-        throw new PreprocessError(
-          `Cannot access property '${propName}' of ${value}`,
-          "NullPropertyAccess",
-          null,
-        );
-      }
-
-      value = value[propName];
     }
 
     return { value, nextIndex: index };

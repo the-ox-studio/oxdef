@@ -5,6 +5,10 @@ import { PreprocessError } from "../errors/errors.js";
  *
  * Pass 1 builds this registry by traversing the expanded AST.
  * Pass 2 uses it to resolve $parent, $this, and $BlockId references.
+ *
+ * Supports both named and anonymous blocks:
+ * - Named blocks: accessible by ID ($BlockId)
+ * - Anonymous blocks: accessible by index ($parent.children[0])
  */
 export class BlockRegistry {
   constructor() {
@@ -15,10 +19,11 @@ export class BlockRegistry {
   /**
    * Register a block with its context
    */
-  register(blockNode, parent = null) {
+  register(blockNode, parent = null, index = null) {
     const context = {
       node: blockNode,
       parent: parent,
+      index: index, // Position in parent's children array
       children: [],
       siblings: [],
       properties: {},
@@ -60,16 +65,26 @@ export class BlockRegistry {
   }
 
   /**
-   * Find a sibling block by ID
+   * Find a sibling block by ID or index
+   * @param {Object} blockNode - The block to find siblings of
+   * @param {string|number} idOrIndex - Block ID (string) or index (number)
+   * @returns {Object|null} The sibling block node or null
    */
-  findSibling(blockNode, siblingId) {
+  findSibling(blockNode, idOrIndex) {
     const context = this.getContext(blockNode);
     if (!context) {
       return null;
     }
 
+    // Index-based lookup
+    if (typeof idOrIndex === "number") {
+      const siblings = this.blocksByParent.get(context.parent) || [];
+      return siblings[idOrIndex] || null;
+    }
+
+    // ID-based lookup (named blocks only)
     const sibling = context.siblings.find(
-      (sibling) => sibling.id === siblingId,
+      (sibling) => sibling.id === idOrIndex,
     );
     return sibling || null;
   }
@@ -80,6 +95,14 @@ export class BlockRegistry {
   getParent(blockNode) {
     const context = this.getContext(blockNode);
     return context ? context.parent : null;
+  }
+
+  /**
+   * Get children array for a block
+   * Returns array of child block nodes
+   */
+  getChildren(blockNode) {
+    return this.blocksByParent.get(blockNode) || [];
   }
 }
 
@@ -99,10 +122,11 @@ export class BlockRegistryBuilder {
       nodes = [nodes];
     }
 
-    for (const node of nodes) {
+    for (let index = 0; index < nodes.length; index++) {
+      const node = nodes[index];
       if (node.type === "Block") {
-        // Register this block
-        const context = this.registry.register(node, parent);
+        // Register this block with its index position
+        const context = this.registry.register(node, parent, index);
 
         // Store evaluated properties (only literals)
         if (node.properties) {
@@ -257,35 +281,83 @@ export class ReferenceResolver {
       );
     }
 
-    // Handle member access chain (e.g., $parent.width, $parent.parent.size)
-    while (index < tokens.length && tokens[index].type === "DOT") {
-      index++; // consume .
+    // Handle member access chain (e.g., $parent.width, $parent.parent.size, $parent.children[0])
+    while (
+      index < tokens.length &&
+      (tokens[index].type === "DOT" || tokens[index].type === "LBRACKET")
+    ) {
+      if (tokens[index].type === "DOT") {
+        index++; // consume .
 
-      if (index >= tokens.length || tokens[index].type !== "IDENTIFIER") {
-        throw new PreprocessError(
-          "Expected property name after '.'",
-          "ExpectedPropertyName",
-          null,
-        );
-      }
-
-      const propName = tokens[index].value;
-      index++;
-
-      // Special case: $parent.parent chains to grandparent
-      if (propName === "parent" && value && value.type === "block") {
-        value = this.resolveParent(value.node);
-      } else {
-        // Access property from the resolved block
-        if (!value || !value.properties || !(propName in value.properties)) {
+        if (index >= tokens.length || tokens[index].type !== "IDENTIFIER") {
           throw new PreprocessError(
-            `Property '${propName}' not found on ${refName}`,
-            "PropertyNotFound",
+            "Expected property name after '.'",
+            "ExpectedPropertyName",
             null,
           );
         }
 
-        value = value.properties[propName];
+        const propName = tokens[index].value;
+        index++;
+
+        // Special case: $parent.parent chains to grandparent
+        if (propName === "parent" && value && value.type === "block") {
+          value = this.resolveParent(value.node);
+        } else if (propName === "children" && value && value.type === "block") {
+          // Special case: $parent.children returns array of child blocks
+          const children = this.registry.getChildren(value.node);
+          value = children.map((child) => {
+            const childContext = this.registry.getContext(child);
+            return {
+              type: "block",
+              node: child,
+              properties: childContext.properties,
+            };
+          });
+        } else {
+          // Access property from the resolved block
+          if (!value || !value.properties || !(propName in value.properties)) {
+            throw new PreprocessError(
+              `Property '${propName}' not found on ${refName}`,
+              "PropertyNotFound",
+              null,
+            );
+          }
+
+          value = value.properties[propName];
+        }
+      } else if (tokens[index].type === "LBRACKET") {
+        // Array indexing: $parent.children[0]
+        index++; // consume [
+
+        // Parse the index expression
+        const indexExpr = this.expressionEvaluator.parseExpression(
+          tokens,
+          index,
+        );
+        const indexValue = indexExpr.value;
+        index = indexExpr.nextIndex;
+
+        // Expect closing ]
+        if (index >= tokens.length || tokens[index].type !== "RBRACKET") {
+          throw new PreprocessError(
+            "Expected ']' after array index",
+            "ExpectedRBracket",
+            null,
+          );
+        }
+        index++; // consume ]
+
+        // Access by index
+        if (!Array.isArray(value)) {
+          throw new PreprocessError(
+            `Cannot index non-array value`,
+            "InvalidIndexAccess",
+            null,
+          );
+        }
+
+        value = value[indexValue];
       }
     }
 
