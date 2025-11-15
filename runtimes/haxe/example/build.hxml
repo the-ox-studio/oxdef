@@ -1,0 +1,38 @@
+# Example Build Configurations for Different Targets
+
+# JavaScript (Browser/Node.js)
+-cp ..
+-main Example
+-js bin/example.js
+
+# Uncomment below for other targets:
+
+# C++ (Native)
+# -cp ..
+# -main Example
+# -cpp bin/cpp
+
+# HashLink (Fast VM)
+# -cp ..
+# -main Example
+# -hl bin/example.hl
+
+# Neko (Haxe VM)
+# -cp ..
+# -main Example
+# -neko bin/example.n
+
+# JVM (Java)
+# -cp ..
+# -main Example
+# -java bin/java
+
+# C# (.NET)
+# -cp ..
+# -main Example
+# -cs bin/cs
+
+# Python
+# -cp ..
+# -main Example
+# -python bin/example.py

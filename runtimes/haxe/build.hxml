@@ -1,0 +1,7 @@
+# OX Haxe Runtime - Build Configuration
+# Build the example to JavaScript
+
+-cp .
+-main example.Example
+-js bin/example.js
+-dce full
