@@ -1,0 +1,12 @@
+# Build configuration for OXDef Haxe externs example
+
+-main Basic
+-js bin/example.cjs
+-cp examples/
+
+# JavaScript target options
+-D js-es=6
+-dce full
+
+# Enable source maps for debugging
+-debug

@@ -1,0 +1,12 @@
+{
+  "name": "oxdef",
+  "url": "https://github.com/yourusername/oxdef",
+  "license": "MIT",
+  "tags": ["parser", "ox", "specification", "dsl", "ast"],
+  "description": "Haxe externs for OXDef - the OX specification and definition language parser",
+  "version": "1.0.0",
+  "classPath": ".",
+  "releasenote": "Initial release of Haxe externs for OXDef JavaScript library",
+  "contributors": ["yourusername"],
+  "dependencies": {}
+}

@@ -1,0 +1,19 @@
+{
+  "name": "haxe",
+  "version": "1.0.0",
+  "description": "Haxe extern definitions for the OXDef JavaScript library, allowing Haxe developers to use the full OX specification and preprocessing system.",
+  "main": "index.js",
+  "bin": {
+    "haxe": "bin/example.js"
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
