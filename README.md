@@ -10,12 +10,6 @@ OX is designed to be more expressive than JSON, more concise than XML/HTML, and 
 2. **Pre-processing Phase**: Evaluate all templates and expressions to produce pure data structures
 3. **Interpretation Phase**: User-defined walkers transform pure data into target output
 
-## Installation
-
-```bash
-npm install oxdefinition
-```
-
 ## Quick Start
 
 ```javascript
@@ -49,7 +43,7 @@ console.log(result.tree);
 
 ## Documentation
 
-See `.ai/README.md` for complete implementation specification and API documentation.
+To be written.
 
 ## Features
 
